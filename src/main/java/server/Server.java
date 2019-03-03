@@ -25,6 +25,8 @@ import static akka.http.scaladsl.model.StatusCodes.*;
 public class Server extends HttpApp {
 
 
+    public static final java.lang.String PATH = "web\\index.html";
+//    public static final java.lang.String PATH = "web/index.html";
     private final GroupRepo groups;
     private final UsersService usersService;
 
@@ -55,7 +57,7 @@ public class Server extends HttpApp {
                     return complete(create().withStatus(InternalServerError()));
                 },
                 pathSingleSlash().route(
-                        getFromResource("web\\index.html")
+                        getFromResource(PATH)
                 ),
                 pathPrefix("groups").route(
                         get(pathEndOrSingleSlash().route(
