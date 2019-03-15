@@ -8,8 +8,15 @@ import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.HttpApp;
 import akka.http.javadsl.server.Route;
 import akka.http.javadsl.server.values.PathMatcher;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import server.model.Group;
+import server.model.User;
+import server.model.request.UserRequest;
+import server.repo.GroupRepo;
+import server.repo.UserRepo;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -24,16 +31,16 @@ import static akka.http.scaladsl.model.StatusCodes.*;
 
 public class Server extends HttpApp {
 
-
     public static final java.lang.String PATH = "web\\index.html";
-//    public static final java.lang.String PATH = "web/index.html";
+    //    public static final java.lang.String PATH = "web/index.html";  //for MAC
+    private ObjectMapper mapper = new ObjectMapper();
     private final GroupRepo groups;
-    private final UsersService usersService;
+    private final UserRepo userRepo;
 
     @Inject
-    public Server(GroupRepo groups, UsersService usersService) {
+    public Server(GroupRepo groups, UserRepo userRepo) {
         this.groups = groups;
-        this.usersService = usersService;
+        this.userRepo = userRepo;
     }
 
     public static void main(String[] args) throws IOException {
@@ -49,7 +56,6 @@ public class Server extends HttpApp {
     @Override
     public Route createRoute() {
 
-        /* Dezelfde instantie moet gebruikt worden voor het opvragen van een PathMatcher! */
         PathMatcher<UUID> uuidExtractor = uuid();
 
         return handleExceptions(e -> {
@@ -104,8 +110,21 @@ public class Server extends HttpApp {
                 ),
                 pathPrefix("users").route(
                         get(pathEndOrSingleSlash().route(
-                                handleWith(requestContext -> requestContext.completeAs(Jackson.json(), usersService.sayHi()))
-                        ))
+                                handleWith(requestContext -> requestContext.completeAs(Jackson.json(), userRepo.getAll()))
+                        )),
+                        pathSuffix("auth").route(
+                                post(pathEndOrSingleSlash()
+                                        .route(
+                                                handleWith(entityAs(jsonAs(UserRequest.class)),
+                                                        (ctx, user) -> {
+                                                            User auth = userRepo.auth(user);
+                                                            return ctx.completeAs(Jackson.json(), auth);
+                                                        }
+                                                )
+                                        )
+                                )
+                        )
+
                 )
         );
     }

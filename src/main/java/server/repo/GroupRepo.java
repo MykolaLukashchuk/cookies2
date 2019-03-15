@@ -1,15 +1,19 @@
-package server;
+package server.repo;
+
+import server.model.Group;
 
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GroupRepo {
-  private final ConcurrentHashMap<UUID, Group> groups = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<UUID, Group> groups = new ConcurrentHashMap<UUID, Group>();
 
   {
-    groups.put(UUID.fromString("d0926864-e5e7-4bca-8067-d05eb7c725e9"),
-        new Group(UUID.fromString("d0926864-e5e7-4bca-8067-d05eb7c725e9"), "BLa bla"));
+      groups.put(
+              UUID.fromString("d0926864-e5e7-4bca-8067-d05eb7c725e9"),
+              new Group(UUID.fromString("d0926864-e5e7-4bca-8067-d05eb7c725e9"), "BLa bla")
+      );
   }
 
   public Group get(UUID uuid) {
