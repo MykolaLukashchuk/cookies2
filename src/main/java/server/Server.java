@@ -12,6 +12,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.model.Group;
 import server.model.User;
 import server.model.request.UserRequest;
@@ -30,6 +32,7 @@ import static akka.http.javadsl.server.values.PathMatchers.uuid;
 import static akka.http.scaladsl.model.StatusCodes.*;
 
 public class Server extends HttpApp {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
     public static final java.lang.String PATH = "web\\index.html";
     //    public static final java.lang.String PATH = "web/index.html";  //for MAC
@@ -44,6 +47,7 @@ public class Server extends HttpApp {
     }
 
     public static void main(String[] args) throws IOException {
+        LOGGER.info("Start App");
         ActorSystem akkaSystem = ActorSystem.create("akka-http-example");
         Injector injector = Guice.createInjector(new AppModule());
         injector.getInstance(Server.class).bindRoute("0.0.0.0", 8080, akkaSystem);
@@ -110,14 +114,19 @@ public class Server extends HttpApp {
                 ),
                 pathPrefix("users").route(
                         get(pathEndOrSingleSlash().route(
-                                handleWith(requestContext -> requestContext.completeAs(Jackson.json(), userRepo.getAll()))
+                                handleWith(requestContext -> {
+                                    LOGGER.info("Request to \"/users\"");
+                                    return requestContext.completeAs(Jackson.json(), userRepo.getAll());
+                                })
                         )),
                         pathSuffix("auth").route(
                                 post(pathEndOrSingleSlash()
                                         .route(
                                                 handleWith(entityAs(jsonAs(UserRequest.class)),
                                                         (ctx, user) -> {
+                                                            LOGGER.info("Request to \"/users/auth\" Body: " + user.toString());
                                                             User auth = userRepo.auth(user);
+                                                            LOGGER.debug("Response. Body: " + auth.toString());
                                                             return ctx.completeAs(Jackson.json(), auth);
                                                         }
                                                 )
