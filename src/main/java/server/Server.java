@@ -1,6 +1,9 @@
 package server;
 
 import akka.actor.ActorSystem;
+import akka.http.javadsl.ConnectionContext;
+import akka.http.javadsl.Http;
+import akka.http.javadsl.HttpsConnectionContext;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.Uri;
@@ -8,20 +11,24 @@ import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.HttpApp;
 import akka.http.javadsl.server.Route;
 import akka.http.javadsl.server.values.PathMatcher;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.model.Group;
-import server.model.User;
-import server.model.request.UserRequest;
 import server.repo.GroupRepo;
-import server.repo.UserRepo;
+import server.routes.BalanceRoute;
+import server.routes.UsersRoute;
 
 import javax.inject.Inject;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -35,15 +42,17 @@ public class Server extends HttpApp {
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
     public static final java.lang.String PATH = "web\\index.html";
+    private final UsersRoute usersRoute;
+    private final BalanceRoute balanceRoute;
     //    public static final java.lang.String PATH = "web/index.html";  //for MAC
     private ObjectMapper mapper = new ObjectMapper();
     private final GroupRepo groups;
-    private final UserRepo userRepo;
 
     @Inject
-    public Server(GroupRepo groups, UserRepo userRepo) {
+    public Server(GroupRepo groups, UsersRoute usersRoute, BalanceRoute balanceRoute) {
         this.groups = groups;
-        this.userRepo = userRepo;
+        this.usersRoute = usersRoute;
+        this.balanceRoute = balanceRoute;
     }
 
     public static void main(String[] args) throws IOException {
@@ -51,6 +60,13 @@ public class Server extends HttpApp {
         ActorSystem akkaSystem = ActorSystem.create("akka-http-example");
         Injector injector = Guice.createInjector(new AppModule());
         injector.getInstance(Server.class).bindRoute("0.0.0.0", 8080, akkaSystem);
+        final Http http = Http.get(akkaSystem);
+
+//        boolean useHttps = false; // pick value from anywhere
+//        if ( useHttps ) {
+//            HttpsConnectionContext https = useHttps(akkaSystem);
+//            http.setDefaultClientHttpsContext();
+//        }
 
         System.out.println("<ENTER> to exit!");
         System.in.read();
@@ -112,29 +128,46 @@ public class Server extends HttpApp {
                                 )
                         ))
                 ),
-                pathPrefix("users").route(
-                        get(pathEndOrSingleSlash().route(
-                                handleWith(requestContext -> {
-                                    LOGGER.info("Request to \"/users\"");
-                                    return requestContext.completeAs(Jackson.json(), userRepo.getAll());
-                                })
-                        )),
-                        pathSuffix("auth").route(
-                                post(pathEndOrSingleSlash()
-                                        .route(
-                                                handleWith(entityAs(jsonAs(UserRequest.class)),
-                                                        (ctx, user) -> {
-                                                            LOGGER.info("Request to \"/users/auth\" Body: " + user.toString());
-                                                            User auth = userRepo.auth(user);
-                                                            LOGGER.debug("Response. Body: " + auth.toString());
-                                                            return ctx.completeAs(Jackson.json(), auth);
-                                                        }
-                                                )
-                                        )
-                                )
-                        )
-
-                )
+                usersRoute.getRoute(),
+                balanceRoute.getRoute()
         );
     }
+
+    //#https-http-config
+    // ** CONFIGURING ADDITIONAL SETTINGS ** //
+
+    public static HttpsConnectionContext useHttps(ActorSystem system) {
+        HttpsConnectionContext https = null;
+        try {
+            // initialise the keystore
+            // !!! never put passwords into code !!!
+            final char[] password = new char[]{'a', 'b', 'c', 'd', 'e', 'f'};
+
+            final KeyStore ks = KeyStore.getInstance("PKCS12");
+            final InputStream keystore = Server.class.getClassLoader().getResourceAsStream("httpsDemoKeys/keys/server.p12");
+            if (keystore == null) {
+                throw new RuntimeException("Keystore required!");
+            }
+            ks.load(keystore, password);
+
+            final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+            keyManagerFactory.init(ks, password);
+
+            final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(ks);
+
+            final SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(keyManagerFactory.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+
+            https = ConnectionContext.https(sslContext);
+
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            system.log().error("Exception while configuring HTTPS.", e);
+        } catch (CertificateException | KeyStoreException | UnrecoverableKeyException | IOException e) {
+            system.log().error("Exception while ", e);
+        }
+
+        return https;
+    }
+    //#https-http-config
 }

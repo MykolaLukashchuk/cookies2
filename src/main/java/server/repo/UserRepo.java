@@ -4,14 +4,20 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import server.CustomException;
 import server.config.MongoClientManager;
 import server.model.User;
 import server.model.request.UserRequest;
+import server.model.responce.UserResponse;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserRepo {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserRepo.class);
 
     private MongoCollection<User> collection;
 
@@ -49,11 +55,27 @@ public class UserRepo {
         return finAll();
     }
 
-    public User auth(UserRequest request) {
+    public UserResponse auth(UserRequest request) throws CustomException {
+        UserResponse response = new UserResponse();
+
+        if (!Character.isLetter(request.getLogin().toCharArray()[0])) {
+            throw new CustomException("ERROR. Login can not start with numeric.");
+        }
         User user = getCollection().find(new BasicDBObject("login", request.getLogin())).first();
         if (user == null) {
             getCollection().insertOne(new User(request.getLogin()));
             user = getCollection().find(new BasicDBObject("login", request.getLogin())).first();
+        }
+        response.setToken(user.getIdAsString());
+        return response;
+    }
+
+    public User find(String token) {
+        User user = null;
+        try {
+            user = getCollection().find(new BasicDBObject("_id", new ObjectId(token))).first();
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("User not found");
         }
         return user;
     }
