@@ -75,7 +75,24 @@ public class BalanceRoute extends AllDirectives {
                                         )
                                 )
                         )
+                ),
+                pathSuffix("do").route(
+                        get(pathEndOrSingleSlash()
+                                .route(
+                                        get(pathEndOrSingleSlash().route(
+                                                handleWith(ctx -> {
+                                                    if (balanceRepo.doSmth()) {
+                                                        return ctx.completeWithStatus(200);
+                                                    } else {
+                                                        return ctx.completeWithStatus(500);
+                                                    }
+                                                })
+                                                )
+                                        )
+                                )
+                        )
                 )
+
         );
     }
 }

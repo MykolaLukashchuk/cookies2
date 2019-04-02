@@ -147,4 +147,15 @@ public class BalanceRepo {
         }
         return response;
     }
+
+    public boolean doSmth() {
+        for (Balance balance : getCollection().find()) {
+            if (balance.getUserId() == null) {
+                getCollection().deleteOne(
+                        new BasicDBObject("_id", balance.getId())
+                );
+            }
+        }
+        return true;
+    }
 }

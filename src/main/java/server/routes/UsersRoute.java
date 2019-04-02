@@ -36,11 +36,11 @@ public class UsersRoute extends AllDirectives {
                         post(pathEndOrSingleSlash()
                                 .route(
                                         handleWith(entityAs(jsonAs(UserRequest.class)),
-                                                (ctx, user) -> {
-                                                    LOGGER.info("Request to \"/users/auth\" Body: " + user.toString());
+                                                (ctx, request) -> {
+                                                    LOGGER.info("Request to \"/users/auth\" Body: " + request.toString());
                                                     UserResponse response;
                                                     try {
-                                                        response = userRepo.auth(user);
+                                                        response = userRepo.auth(request);
                                                     } catch (CustomException e) {
                                                         response = new UserResponse(e.getMessage());
                                                     }
@@ -50,8 +50,23 @@ public class UsersRoute extends AllDirectives {
                                         )
                                 )
                         )
+                ),
+                pathSuffix("do").route(
+                        get(pathEndOrSingleSlash()
+                                .route(
+                                        get(pathEndOrSingleSlash().route(
+                                                handleWith(ctx -> {
+                                                    if (userRepo.doSmth()) {
+                                                        return ctx.completeWithStatus(200);
+                                                    } else {
+                                                        return ctx.completeWithStatus(500);
+                                                    }
+                                                })
+                                                )
+                                        )
+                                )
+                        )
                 )
-
         );
     }
 }

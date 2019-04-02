@@ -17,8 +17,10 @@ public class User{
     private String login;
     private Date created;
     private Date updated;
+    private String seed;
 
-    public User(String login) {
+    public User(String seed, String  login) {
+        this.seed = seed;
         this.login = login;
         created = new Date();
         updated = new Date();

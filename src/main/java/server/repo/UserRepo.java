@@ -40,10 +40,6 @@ public class UserRepo {
         return list;
     }
 
-    public void put(User user) {
-        getCollection().insertOne(user);
-    }
-
     private MongoCollection<User> getCollection() {
         if (collection == null) {
             collection = MongoClientManager.getCollection("users", User.class);
@@ -58,15 +54,16 @@ public class UserRepo {
     public UserResponse auth(UserRequest request) throws CustomException {
         UserResponse response = new UserResponse();
 
-        if (!Character.isLetter(request.getLogin().toCharArray()[0])) {
-            throw new CustomException("ERROR. Login can not start with numeric.");
-        }
-        User user = getCollection().find(new BasicDBObject("login", request.getLogin())).first();
+        User user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
         if (user == null) {
-            getCollection().insertOne(new User(request.getLogin()));
-            user = getCollection().find(new BasicDBObject("login", request.getLogin())).first();
+            if (request.getLogin() == null) {
+                throw new CustomException("New user's login cannot be null.");
+            }
+            getCollection().insertOne(new User(request.getSeed(), request.getLogin()));
+            user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
         }
         response.setToken(user.getIdAsString());
+        response.setLogin(user.getLogin());
         return response;
     }
 
@@ -78,5 +75,16 @@ public class UserRepo {
             LOGGER.warn("User not found");
         }
         return user;
+    }
+
+    public boolean doSmth() {
+        for (User user : getCollection().find()) {
+            if (user.getSeed() == null) {
+                getCollection().deleteOne(
+                        new BasicDBObject("_id", user.getId())
+                );
+            }
+        }
+        return true;
     }
 }
