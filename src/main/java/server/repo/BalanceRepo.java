@@ -108,8 +108,8 @@ public class BalanceRepo {
     }
 
     public BoardResponse getLiederBoard(BoardRequest request) {
-        BoardResponse response = new BoardResponse();
-        User user = userRepo.find(request.getToken());
+        final BoardResponse response = new BoardResponse();
+        final User user = userRepo.find(request.getToken());
         if (user == null) {
             // TODO: 26.03.2019 добавить исключение
             LOGGER.warn("User not found!");
@@ -118,12 +118,10 @@ public class BalanceRepo {
         }
 
         final List<Balance> balances = new ArrayList<>();
-        FindIterable<Balance> iterable = getCollection().find(new BasicDBObject("balance", new BasicDBObject("$ne", null))).sort(new BasicDBObject("balance", -1));
+        final FindIterable<Balance> iterable = getCollection().find(new BasicDBObject("balance", new BasicDBObject("$ne", null))).sort(new BasicDBObject("balance", -1));
         for (Balance balance : iterable) {
             balances.add(balance);
         }
-
-        final Map<String, Long> liederBoard = new LinkedHashMap<>();
 
         int i = balances.indexOf(new Balance(request.getToken()));
         if (i < 6) {
@@ -132,22 +130,21 @@ public class BalanceRepo {
                     .forEach(balance -> {
                         String login = userRepo.find(balance.getUserId()).getLogin();
                         Long balance1 = balance.getBalance();
-                        liederBoard.put(login, balance1);
+                        response.putPosition(login, balance1, balances.indexOf(balance) + 1);
                     });
         } else {
             balances.stream()
                     .limit(3)
-                    .forEachOrdered(balance -> liederBoard.put(userRepo.find(balance.getUserId()).getLogin(), balance.getBalance()));
+                    .forEachOrdered(balance -> response.putPosition(userRepo.find(balance.getUserId()).getLogin(), balance.getBalance(), balances.indexOf(balance) + 1));
             i -= 2;
             for (int j = 0; j < 5; j++) {
                 Balance balance = balances.get(i++);
-                liederBoard.put(userRepo.find(balance.getUserId()).getLogin(), balance.getBalance());
+                response.putPosition(userRepo.find(balance.getUserId()).getLogin(), balance.getBalance(), balances.indexOf(balance) + 1);
                 if (i > balances.size() - 1) {
                     break;
                 }
             }
         }
-        response.setLiederBoard(liederBoard);
         return response;
     }
 }
