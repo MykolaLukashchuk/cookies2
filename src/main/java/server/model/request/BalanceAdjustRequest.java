@@ -13,5 +13,5 @@ public class BalanceAdjustRequest {
     /**
      * Значение на которое меняется баланс
      */
-    private Integer activity;
+    private Long activity;
 }

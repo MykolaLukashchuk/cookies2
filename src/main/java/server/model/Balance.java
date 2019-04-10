@@ -29,7 +29,7 @@ public class Balance {
         return id.toString();
     }
 
-    public void adjust(Integer activity) {
+    public void adjust(Long activity) {
         balance += activity;
     }
 

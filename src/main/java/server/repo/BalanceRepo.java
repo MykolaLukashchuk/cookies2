@@ -8,6 +8,7 @@ import com.mongodb.client.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.config.MongoClientManager;
+import server.model.Adjustment;
 import server.model.Balance;
 import server.model.User;
 import server.model.request.BalanceAdjustRequest;
@@ -27,6 +28,7 @@ public class BalanceRepo {
 
     private final UserRepo userRepo;
     private MongoCollection<Balance> collection;
+    private MongoCollection<Adjustment> adjustments;
 
     @Inject
     public BalanceRepo(UserRepo userRepo) {
@@ -47,6 +49,13 @@ public class BalanceRepo {
             collection = MongoClientManager.getCollection("balance", Balance.class);
         }
         return collection;
+    }
+
+    private MongoCollection<Adjustment> getAdjustmentsCollection() {
+        if (adjustments == null) {
+            adjustments = MongoClientManager.getCollection("adjustments", Adjustment.class);
+        }
+        return adjustments;
     }
 
     public List getAll() {
@@ -89,6 +98,7 @@ public class BalanceRepo {
                                 getCollection().updateOne(new BasicDBObject("userId", request.getToken()),
                                         new BasicDBObject("$set", new BasicDBObject("balance",
                                                 balance.getBalance()).append("updated", new Date())));
+                                getAdjustmentsCollection().insertOne(new Adjustment(request.getToken(), request.getActivity()));
                                 response.setBalance(balance.getBalance());
                                 return balance;
                             })
