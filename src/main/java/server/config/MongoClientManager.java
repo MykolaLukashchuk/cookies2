@@ -1,5 +1,6 @@
 package server.config;
 
+import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
@@ -7,9 +8,12 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.connection.SocketSettings;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+
+import java.util.concurrent.TimeUnit;
 
 public class MongoClientManager {
     private static volatile MongoClientManager INSTANCE = null;
@@ -21,6 +25,12 @@ public class MongoClientManager {
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString("mongodb+srv://user:9zacrvEa23d6bhL@cluster0-b0im4.gcp.mongodb.net/test?retryWrites=true"))
                 .codecRegistry(pojoCodecRegistry)
+                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
+                    @Override
+                    public void apply(SocketSettings.Builder builder) {
+                        builder.connectTimeout(60, TimeUnit.SECONDS);
+                    }
+                })
                 .build();
         MongoClient mongoClient = MongoClients.create(settings);
         database = mongoClient.getDatabase("dev");
