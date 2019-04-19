@@ -16,14 +16,14 @@ public class BoardResponse {
     private String message;
     final private List<Position> liederBoard = new ArrayList<>();
 
-    public void putPosition(String login, Long balance1, int position) {
-        liederBoard.add(new Position(login, balance1, position));
+    public void putPosition(String nickname, Long balance1, int position) {
+        liederBoard.add(new Position(nickname, balance1, position));
     }
 
     @Data
     @AllArgsConstructor
     public class Position {
-        private String login;
+        private String nickname;
         private Long Balance;
         private int Position;
     }

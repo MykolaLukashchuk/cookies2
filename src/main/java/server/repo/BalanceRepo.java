@@ -1,10 +1,8 @@
 package server.repo;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.config.MongoClientManager;
@@ -18,7 +16,6 @@ import server.model.responce.BalanceResponse;
 
 import javax.inject.Inject;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import server.model.responce.BoardResponse;
 
@@ -138,18 +135,18 @@ public class BalanceRepo {
             balances.stream()
                     .limit(8)
                     .forEach(balance -> {
-                        String login = userRepo.find(balance.getUserId()).getLogin();
+                        String nickname = userRepo.find(balance.getUserId()).getNickname();
                         Long balance1 = balance.getBalance();
-                        response.putPosition(login, balance1, balances.indexOf(balance) + 1);
+                        response.putPosition(nickname, balance1, balances.indexOf(balance) + 1);
                     });
         } else {
             balances.stream()
                     .limit(3)
-                    .forEachOrdered(balance -> response.putPosition(userRepo.find(balance.getUserId()).getLogin(), balance.getBalance(), balances.indexOf(balance) + 1));
+                    .forEachOrdered(balance -> response.putPosition(userRepo.find(balance.getUserId()).getNickname(), balance.getBalance(), balances.indexOf(balance) + 1));
             i -= 2;
             for (int j = 0; j < 5; j++) {
                 Balance balance = balances.get(i++);
-                response.putPosition(userRepo.find(balance.getUserId()).getLogin(), balance.getBalance(), balances.indexOf(balance) + 1);
+                response.putPosition(userRepo.find(balance.getUserId()).getNickname(), balance.getBalance(), balances.indexOf(balance) + 1);
                 if (i > balances.size() - 1) {
                     break;
                 }

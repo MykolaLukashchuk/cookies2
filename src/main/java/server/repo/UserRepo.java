@@ -3,6 +3,7 @@ package server.repo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import server.model.request.UserRequest;
 import server.model.responce.UserResponse;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class UserRepo {
@@ -24,7 +26,7 @@ public class UserRepo {
     public UserRepo() {
     }
 
-    public List finAll() {
+    public List<User> finAll() {
         List<User> list = new ArrayList<User>();
         FindIterable<User> iterable = getCollection().find();
         for (User doc : iterable) {
@@ -52,18 +54,21 @@ public class UserRepo {
     }
 
     public UserResponse auth(UserRequest request) throws CustomException {
-        UserResponse response = new UserResponse();
+        final UserResponse response = new UserResponse();
 
         User user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
+
         if (user == null) {
-            if (request.getLogin() == null) {
-                throw new CustomException("New user's login cannot be null.");
+            response.setNewDevice(true);
+        } else {
+            if (request.getNickname() == null) {
+                throw new CustomException("New user's nickname cannot be null.");
             }
-            getCollection().insertOne(new User(request.getSeed(), request.getLogin()));
+            getCollection().insertOne(new User(request.getSeed(), request.getNickname()));
             user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
+            response.setToken(user.getIdAsString());
+            response.setNickname(user.getNickname());
         }
-        response.setToken(user.getIdAsString());
-        response.setLogin(user.getLogin());
         return response;
     }
 
@@ -77,13 +82,21 @@ public class UserRepo {
         return user;
     }
 
+    /**
+     * "$unset" - delete field
+     * "$set" - change field
+     * @return
+     */
     public boolean doSmth() {
         for (User user : getCollection().find()) {
-            if (user.getSeed() == null) {
-                getCollection().deleteOne(
-                        new BasicDBObject("_id", user.getId())
-                );
-            }
+//            if (user.getSeed() == null) {
+//                getCollection().deleteOne(
+//                        new BasicDBObject("_id", user.getId())
+//                );
+//            }
+                getCollection().updateOne(new BasicDBObject("_id", user.getId()),
+                        new BasicDBObject("$unset", new BasicDBObject("login",
+                                user.getLogin())));
         }
         return true;
     }

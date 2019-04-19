@@ -6,11 +6,14 @@ import akka.http.javadsl.server.Route;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
+import server.model.User;
 import server.model.request.UserRequest;
 import server.model.responce.UserResponse;
 import server.repo.UserRepo;
 
 import javax.inject.Inject;
+
+import java.util.List;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.jsonAs;
 import static akka.http.javadsl.server.RequestVals.entityAs;
@@ -29,7 +32,8 @@ public class UsersRoute extends AllDirectives {
                 get(pathEndOrSingleSlash().route(
                         handleWith(requestContext -> {
                             LOGGER.info("Request to \"/users\"");
-                            return requestContext.completeAs(Jackson.json(), userRepo.getAll());
+                            List<User> allUsers = userRepo.getAll();
+                            return requestContext.completeAs(Jackson.json(), allUsers);
                         })
                 )),
                 pathSuffix("auth").route(

@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 public class UserResponse {
     private String token;
     private String message;
-    private String login;
+    private String nickname;
+    private Boolean newDevice;
 
     public UserResponse(String message) {
         this.message = message;

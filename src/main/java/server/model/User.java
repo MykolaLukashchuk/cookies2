@@ -14,14 +14,15 @@ import java.util.Date;
 @AllArgsConstructor
 public class User{
     private ObjectId id;
+    private String nickname;
     private String login;
     private Date created;
     private Date updated;
     private String seed;
 
-    public User(String seed, String  login) {
+    public User(String seed, String nickname) {
         this.seed = seed;
-        this.login = login;
+        this.nickname = nickname;
         created = new Date();
         updated = new Date();
     }
