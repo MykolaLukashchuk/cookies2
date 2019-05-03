@@ -11,6 +11,8 @@
     <properties>
         <akka.version>2.4.17</akka.version>
         <akka-http.version>1.0-RC4</akka-http.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencies>
