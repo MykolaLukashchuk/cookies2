@@ -41,7 +41,8 @@ import static akka.http.scaladsl.model.StatusCodes.*;
 public class Server extends HttpApp {
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
-    public static final java.lang.String PATH = "web\\index.html";
+//    public static final java.lang.String PATH = "web\\index.html";
+    public static final java.lang.String PATH = "web/index.html";
     private final UsersRoute usersRoute;
     private final BalanceRoute balanceRoute;
     //    public static final java.lang.String PATH = "web/index.html";  //for MAC
