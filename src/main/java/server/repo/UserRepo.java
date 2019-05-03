@@ -3,7 +3,6 @@ package server.repo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +13,6 @@ import server.model.request.UserRequest;
 import server.model.responce.UserResponse;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class UserRepo {
@@ -59,11 +57,12 @@ public class UserRepo {
         User user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
 
         if (user == null) {
+            getCollection().insertOne(new User(request.getSeed(), request.getNickname()));
             response.setNewDevice(true);
+        } else if (user.getNickname() == null && request.getNickname() == null) {
+            response.setNewDevice(true);
+            throw new CustomException("New user's nickname cannot be null.");
         } else {
-            if (request.getNickname() == null) {
-                throw new CustomException("New user's nickname cannot be null.");
-            }
             getCollection().insertOne(new User(request.getSeed(), request.getNickname()));
             user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
             response.setToken(user.getIdAsString());

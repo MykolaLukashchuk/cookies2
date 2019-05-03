@@ -26,6 +26,10 @@ public class UsersRouteTest extends BaseTest {
         System.out.println(result);
     }
 
+    /**
+     * Test of new totally new seed
+     * @throws IOException
+     */
     @Test
     public void test2() throws IOException {
         HttpURLConnection connection = getPostHttpURLConnection(new URL("http://192.168.0.102:8080/users/auth"));
@@ -43,6 +47,31 @@ public class UsersRouteTest extends BaseTest {
         Assert.assertTrue(responseBody.getNewDevice());
         Assert.assertNull(responseBody.getNickname());
         Assert.assertNull(responseBody.getToken());
+        Assert.assertNull(responseBody.getMessage());
+
+        System.out.println(responseBody);
+    }
+
+    /**
+     * Test of the present user
+     * @throws IOException
+     */
+    @Test
+    public void test3() throws IOException {
+        HttpURLConnection connection = getPostHttpURLConnection(new URL("http://192.168.0.102:8080/users/auth"));
+
+        UserRequest request = new UserRequest();
+        request.setSeed("test4");
+
+        mapper.writeValue(connection.getOutputStream(), request);
+        UserResponse responseBody = mapper.readValue(connection.getInputStream(), UserResponse.class);
+
+        Assert.assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
+        Assert.assertNotNull(responseBody);
+
+        Assert.assertNull(responseBody.getNewDevice());
+        Assert.assertEquals(responseBody.getNickname(), "test4");
+        Assert.assertEquals(responseBody.getToken(), "5c9b2585662cdc22804ba11f");
         Assert.assertNull(responseBody.getMessage());
 
         System.out.println(responseBody);
