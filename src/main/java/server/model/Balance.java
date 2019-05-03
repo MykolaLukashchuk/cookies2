@@ -7,13 +7,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Objects;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Balance {
     private ObjectId id;
     private String userId;

@@ -1,9 +1,7 @@
 package server.model.responce;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +18,9 @@ public class BoardResponse {
         liederBoard.add(new Position(nickname, balance1, position));
     }
 
-    @Data
     @AllArgsConstructor
+    @Getter
+    @Setter
     public class Position {
         private String nickname;
         private Long Balance;
