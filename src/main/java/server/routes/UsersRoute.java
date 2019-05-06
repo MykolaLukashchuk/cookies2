@@ -3,6 +3,7 @@ package server.routes;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
@@ -130,6 +131,7 @@ public class UsersRoute extends AllDirectives {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Request {
         private String body;
     }
