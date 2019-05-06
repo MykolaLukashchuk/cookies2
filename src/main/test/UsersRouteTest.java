@@ -4,35 +4,24 @@ import org.junit.Ignore;
 import org.junit.Test;
 import server.model.request.UserRequest;
 import server.model.responce.UserResponse;
+import server.routes.UsersRoute;
+import server.utils.EncryptUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.stream.Collectors;
 
 
 public class UsersRouteTest extends BaseTest {
-
-    @Test
-    @Ignore
-    public void test1() throws IOException {
-        HttpURLConnection connection = getGetHttpURLConnection(new URL("http://192.168.0.102:8080/users"));
-        String result = new BufferedReader(new InputStreamReader(connection.getInputStream()))
-                .lines().collect(Collectors.joining("\n"));
-        Assert.assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
-        Assert.assertNotNull(result);
-        System.out.println(result);
-    }
 
     /**
      * Test of new totally new seed
      * @throws IOException
      */
     @Test
+    @Ignore
     public void test2() throws IOException {
-        HttpURLConnection connection = getPostHttpURLConnection(new URL("http://192.168.0.102:8080/users/auth"));
+        HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/users/auth"));
 
         UserRequest request = new UserRequest();
         request.setSeed("testNewSeed");
@@ -57,24 +46,59 @@ public class UsersRouteTest extends BaseTest {
      * @throws IOException
      */
     @Test
-    public void test3() throws IOException {
-        HttpURLConnection connection = getPostHttpURLConnection(new URL("http://192.168.0.102:8080/users/auth"));
+    public void authRealSeed() throws Exception {
+        HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/users/auth"));
 
         UserRequest request = new UserRequest();
         request.setSeed("test4");
+//        request.setNickname("Test4");
 
-        mapper.writeValue(connection.getOutputStream(), request);
-        UserResponse responseBody = mapper.readValue(connection.getInputStream(), UserResponse.class);
+        String requestString = mapper.writeValueAsString(request);
+
+        mapper.writeValue(connection.getOutputStream(), new UsersRoute.Request(EncryptUtils.encryptAsUser(requestString)));
+
+        UsersRoute.Response response = mapper.readValue(connection.getInputStream(), UsersRoute.Response.class);
 
         Assert.assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
+        Assert.assertNotNull(response);
+        Assert.assertNotNull(response.getBody());
+        Assert.assertNull(response.getMessage());
+
+        UserResponse responseBody = mapper.readValue(EncryptUtils.decryptAsUser(response.getBody()), UserResponse.class);
+
         Assert.assertNotNull(responseBody);
 
         Assert.assertNull(responseBody.getNewDevice());
-        Assert.assertEquals(responseBody.getNickname(), "test4");
-        Assert.assertEquals(responseBody.getToken(), "5c9b2585662cdc22804ba11f");
+        Assert.assertEquals(responseBody.getNickname(), "Test4");
+        Assert.assertEquals(responseBody.getToken(), "5ccc9d00c994ac568669d53a");
         Assert.assertNull(responseBody.getMessage());
 
         System.out.println(responseBody);
     }
 
+    /**
+     * Auth with exception
+     *
+     * @throws IOException
+     */
+    @Test
+    public void authWithException() throws IOException {
+        HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/users/auth"));
+
+        UserRequest request = new UserRequest();
+        request.setSeed("");
+
+        String requestString = mapper.writeValueAsString(request);
+
+        mapper.writeValue(connection.getOutputStream(), new UsersRoute.Request(EncryptUtils.encryptAsUser(requestString)));
+
+        UsersRoute.Response response = mapper.readValue(connection.getInputStream(), UsersRoute.Response.class);
+
+        Assert.assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
+        Assert.assertNotNull(response);
+        Assert.assertNull(response.getBody());
+        Assert.assertNotNull(response.getMessage());
+
+        System.out.println(response.toString());
+    }
 }

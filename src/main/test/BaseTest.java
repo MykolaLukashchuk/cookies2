@@ -5,7 +5,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public abstract class BaseTest {
-    protected final ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new ObjectMapper();
+    static final String URL = "http://192.168.0.102:8080";
+
 
     protected static  HttpURLConnection getPutHttpURLConnection(URL url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -17,7 +19,7 @@ public abstract class BaseTest {
         return connection;
     }
 
-    protected static  HttpURLConnection getPostHttpURLConnection(URL url) throws IOException {
+    static  HttpURLConnection getPostHttpURLConnection(URL url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/json");

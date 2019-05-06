@@ -13,7 +13,9 @@ import server.model.request.UserRequest;
 import server.model.responce.UserResponse;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class UserRepo {
 
@@ -52,22 +54,27 @@ public class UserRepo {
     }
 
     public UserResponse auth(UserRequest request) throws CustomException {
+
+        if (request.getSeed() == null || request.getSeed().equals("")) {
+            throw new CustomException("Seed cannot be empty.");
+        }
+
         final UserResponse response = new UserResponse();
 
         User user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
 
         if (user == null) {
-            getCollection().insertOne(new User(request.getSeed(), request.getNickname()));
+            getCollection().insertOne(new User(request.getSeed()));
             response.setNewDevice(true);
+            return response;
         } else if (user.getNickname() == null && request.getNickname() == null) {
             response.setNewDevice(true);
             throw new CustomException("New user's nickname cannot be null.");
-        } else {
-            getCollection().insertOne(new User(request.getSeed(), request.getNickname()));
-            user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
-            response.setToken(user.getIdAsString());
-            response.setNickname(user.getNickname());
+        } else if (user.getNickname() == null && request.getNickname() != null) {
+            user = getCollection().findOneAndUpdate(new BasicDBObject("seed", request.getSeed()), new BasicDBObject("$set", new BasicDBObject("nickname", request.getNickname()).append("updated", new Date())));
         }
+        response.setToken(user.getIdAsString());
+        response.setNickname(user.getNickname());
         return response;
     }
 
@@ -88,14 +95,14 @@ public class UserRepo {
      */
     public boolean doSmth() {
         for (User user : getCollection().find()) {
-//            if (user.getSeed() == null) {
-//                getCollection().deleteOne(
-//                        new BasicDBObject("_id", user.getId())
-//                );
-//            }
-                getCollection().updateOne(new BasicDBObject("_id", user.getId()),
-                        new BasicDBObject("$unset", new BasicDBObject("login",
-                                user.getLogin())));
+            if (user.getSeed() == null || user.getSeed().equals("testNewSeed")|| user.getSeed().equals("test4")) {
+                getCollection().deleteOne(
+                        new BasicDBObject("_id", user.getId())
+                );
+            }
+//                getCollection().updateOne(new BasicDBObject("_id", user.getId()),
+//                        new BasicDBObject("$unset", new BasicDBObject("login",
+//                                user.getLogin())));
         }
         return true;
     }

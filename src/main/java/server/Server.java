@@ -20,16 +20,19 @@ import server.model.Group;
 import server.repo.GroupRepo;
 import server.routes.BalanceRoute;
 import server.routes.UsersRoute;
+import server.utils.EncryptUtils;
 
 import javax.inject.Inject;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.UUID;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.jsonAs;
@@ -40,6 +43,7 @@ import static akka.http.scaladsl.model.StatusCodes.*;
 
 public class Server extends HttpApp {
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
+    public static Properties prop = new Properties();
 
 //    public static final java.lang.String PATH = "web\\index.html";
     public static final java.lang.String PATH = "web/index.html";
@@ -58,6 +62,7 @@ public class Server extends HttpApp {
 
     public static void main(String[] args) throws IOException {
         LOGGER.info("Start App");
+        loadProperties();
         ActorSystem akkaSystem = ActorSystem.create("akka-http-example");
         Injector injector = Guice.createInjector(new AppModule());
         injector.getInstance(Server.class).bindRoute("0.0.0.0", 8080, akkaSystem);
@@ -72,6 +77,14 @@ public class Server extends HttpApp {
         System.out.println("<ENTER> to exit!");
         System.in.read();
         akkaSystem.shutdown();
+    }
+
+    private static void loadProperties() {
+        try (InputStream input = EncryptUtils.class.getClassLoader().getResourceAsStream("app.properties")) {
+            prop.load(input);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @Override
