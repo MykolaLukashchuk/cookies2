@@ -1,17 +1,20 @@
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
+import server.model.request.Request;
 import server.model.request.UserRequest;
+import server.model.responce.Response;
 import server.model.responce.UserResponse;
-import server.routes.UsersRoute;
 import server.utils.EncryptUtils;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UsersRouteTest extends BaseTest {
 
     /**
@@ -55,9 +58,9 @@ public class UsersRouteTest extends BaseTest {
 
         String requestString = mapper.writeValueAsString(request);
 
-        mapper.writeValue(connection.getOutputStream(), new UsersRoute.Request(EncryptUtils.encryptAsUser(requestString)));
+        mapper.writeValue(connection.getOutputStream(), new Request(EncryptUtils.encryptAsUser(requestString)));
 
-        UsersRoute.Response response = mapper.readValue(connection.getInputStream(), UsersRoute.Response.class);
+        Response response = mapper.readValue(connection.getInputStream(), Response.class);
 
         Assert.assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
         Assert.assertNotNull(response);
@@ -90,9 +93,9 @@ public class UsersRouteTest extends BaseTest {
 
         String requestString = mapper.writeValueAsString(request);
 
-        mapper.writeValue(connection.getOutputStream(), new UsersRoute.Request(EncryptUtils.encryptAsUser(requestString)));
+        mapper.writeValue(connection.getOutputStream(), new Request(EncryptUtils.encryptAsUser(requestString)));
 
-        UsersRoute.Response response = mapper.readValue(connection.getInputStream(), UsersRoute.Response.class);
+        Response response = mapper.readValue(connection.getInputStream(), Response.class);
 
         Assert.assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
         Assert.assertNotNull(response);

@@ -3,14 +3,14 @@ package server.routes;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
+import server.Server;
+import server.model.request.Request;
 import server.model.request.UserRequest;
+import server.model.responce.Response;
 import server.model.responce.UserResponse;
 import server.repo.UserRepo;
 import server.utils.EncryptUtils;
@@ -21,11 +21,11 @@ import java.util.Optional;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.jsonAs;
 import static akka.http.javadsl.server.RequestVals.entityAs;
+import static server.Server.*;
 
 public class UsersRoute extends AllDirectives {
     private static final Logger LOGGER = LoggerFactory.getLogger(UsersRoute.class);
     private final UserRepo userRepo;
-    private final static ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public UsersRoute(UserRepo userRepo) {
@@ -125,24 +125,5 @@ public class UsersRoute extends AllDirectives {
             LOGGER.error(e.getMessage(), e);
             throw new CustomException(e.getMessage());
         }
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Request {
-        private String body;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @ToString
-    public static class Response {
-        private String body;
-        private String message;
     }
 }

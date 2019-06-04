@@ -22,11 +22,11 @@ public class BoardResponse {
         liederBoard.add(new Position(nickname, balance1, position));
     }
 
-    @AllArgsConstructor
     @Getter
     @Setter
     @NoArgsConstructor
-    public class Position {
+    @AllArgsConstructor
+    public static class Position {
         private String nickname;
         private Long balance;
         private int position;

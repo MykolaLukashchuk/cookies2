@@ -4,15 +4,15 @@ import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
+import server.Server;
 import server.model.request.BalanceAdjustRequest;
 import server.model.request.BalanceRequest;
 import server.model.request.BoardRequest;
-import server.model.responce.BoardResponse;
+import server.model.request.Request;
+import server.model.responce.Response;
 import server.repo.BalanceRepo;
 import server.utils.EncryptUtils;
 
@@ -21,12 +21,11 @@ import java.util.Optional;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.jsonAs;
 import static akka.http.javadsl.server.RequestVals.entityAs;
+import static server.Server.*;
 
 public class BalanceRoute extends AllDirectives {
     private static final Logger LOGGER = LoggerFactory.getLogger(BalanceRoute.class);
     private final BalanceRepo balanceRepo;
-    private final static ObjectMapper mapper = new ObjectMapper();
-
 
     @Inject
     public BalanceRoute(BalanceRepo balanceRepo) {
@@ -161,27 +160,11 @@ public class BalanceRoute extends AllDirectives {
     private <T> Optional<T> decryptUser(Request request, Class<T> t) throws CustomException {
         try {
             return Optional.of(mapper.readValue(EncryptUtils.decryptAsUser(request.getBody()), t));
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(e.getMessage());
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new CustomException(e.getMessage());
         }
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Request {
-        private String body;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @ToString
-    public static class Response {
-        private String body;
-        private String message;
     }
 }

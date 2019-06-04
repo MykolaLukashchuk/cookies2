@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import server.model.Group;
 import server.repo.GroupRepo;
 import server.routes.BalanceRoute;
+import server.routes.ConfigRoute;
 import server.routes.UsersRoute;
 import server.utils.EncryptUtils;
 
@@ -49,15 +50,17 @@ public class Server extends HttpApp {
     public static final java.lang.String PATH = "web/index.html";
     private final UsersRoute usersRoute;
     private final BalanceRoute balanceRoute;
+    private final ConfigRoute configRoute;
     //    public static final java.lang.String PATH = "web/index.html";  //for MAC
-    private ObjectMapper mapper = new ObjectMapper();
+    public static final ObjectMapper mapper = new ObjectMapper();
     private final GroupRepo groups;
 
     @Inject
-    public Server(GroupRepo groups, UsersRoute usersRoute, BalanceRoute balanceRoute) {
+    public Server(GroupRepo groups, UsersRoute usersRoute, BalanceRoute balanceRoute, ConfigRoute configRoute) {
         this.groups = groups;
         this.usersRoute = usersRoute;
         this.balanceRoute = balanceRoute;
+        this.configRoute = configRoute;
     }
 
     public static void main(String[] args) throws IOException {
@@ -76,7 +79,7 @@ public class Server extends HttpApp {
 
         System.out.println("<ENTER> to exit!");
         System.in.read();
-        akkaSystem.shutdown();
+        akkaSystem.terminate();
     }
 
     private static void loadProperties() {
@@ -143,7 +146,8 @@ public class Server extends HttpApp {
                         ))
                 ),
                 usersRoute.getRoute(),
-                balanceRoute.getRoute()
+                balanceRoute.getRoute(),
+                configRoute.getRoute()
         );
     }
 
