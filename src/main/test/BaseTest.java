@@ -6,7 +6,7 @@ import java.net.URL;
 
 public abstract class BaseTest {
     final ObjectMapper mapper = new ObjectMapper();
-    static final String URL = "http://192.168.0.102:8080";
+    static final String URL = "http://192.168.0.104:8080";
 
 
     protected static  HttpURLConnection getPutHttpURLConnection(URL url) throws IOException {

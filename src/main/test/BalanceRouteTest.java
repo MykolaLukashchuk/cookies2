@@ -3,7 +3,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import server.model.request.BalanceAdjustRequest;
 import server.model.request.BalanceRequest;
+import server.model.request.BoardRequest;
 import server.model.responce.BalanceResponse;
+import server.model.responce.BoardResponse;
 import server.routes.BalanceRoute;
 import server.utils.EncryptUtils;
 
@@ -66,5 +68,25 @@ public class BalanceRouteTest extends BaseTest {
         System.out.println(responseBody.toString());
 
         Assert.assertEquals(10L, responseBody.getBalance() - firstBalance);
+    }
+
+    @Test
+    public void getLiederBoardTest() throws Exception {
+        HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/balance/board"));
+
+        BoardRequest boardRequest = new BoardRequest();
+        boardRequest.setToken(TEST_TOKEN);
+
+        mapper.writeValue(connection.getOutputStream(), new BalanceRoute.Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(boardRequest))));
+        BalanceRoute.Response response = mapper.readValue(connection.getInputStream(), BalanceRoute.Response.class);
+
+        BoardResponse responseBody = mapper.readValue(EncryptUtils.decryptAsUser(response.getBody()), BoardResponse.class);
+        System.out.println(responseBody.toString());
+
+        Assert.assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
+        Assert.assertNotNull(response);
+        Assert.assertNotNull(response.getBody());
+        Assert.assertNull(response.getMessage());
+
     }
 }

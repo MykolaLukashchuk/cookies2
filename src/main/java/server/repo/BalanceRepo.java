@@ -135,6 +135,7 @@ public class BalanceRepo {
             balances.stream()
                     .limit(8)
                     .forEach(balance -> {
+                        //todo solve the situation when balance present and user absent
                         String nickname = userRepo.find(balance.getUserId()).getNickname();
                         Long balance1 = balance.getBalance();
                         response.putPosition(nickname, balance1, balances.indexOf(balance) + 1);
@@ -142,7 +143,8 @@ public class BalanceRepo {
         } else {
             balances.stream()
                     .limit(3)
-                    .forEachOrdered(balance -> response.putPosition(userRepo.find(balance.getUserId()).getNickname(), balance.getBalance(), balances.indexOf(balance) + 1));
+                    .forEachOrdered(balance -> response.putPosition(userRepo.find(balance.getUserId()).getNickname(), balance.getBalance(),
+                            (balances.indexOf(balance) + 1)));
             i -= 2;
             for (int j = 0; j < 5; j++) {
                 Balance balance = balances.get(i++);

@@ -12,7 +12,6 @@ import server.CustomException;
 import server.model.request.BalanceAdjustRequest;
 import server.model.request.BalanceRequest;
 import server.model.request.BoardRequest;
-import server.model.responce.BalanceResponse;
 import server.model.responce.BoardResponse;
 import server.repo.BalanceRepo;
 import server.utils.EncryptUtils;
@@ -110,13 +109,30 @@ public class BalanceRoute extends AllDirectives {
                 pathSuffix("board").route(
                         post(pathEndOrSingleSlash()
                                 .route(
-                                        handleWith(entityAs(jsonAs(BoardRequest.class)),
+                                        handleWith(entityAs(jsonAs(Request.class)),
                                                 (ctx, request) -> {
-                                                    // TODO: 03.05.2019 user
-                                                    LOGGER.info("Request to \"/balance/board\" Body: " + request.toString());
-                                                    BoardResponse response = balanceRepo.getLiederBoard(request);
-                                                    LOGGER.debug("Response. Body: " + response.toString());
-                                                    return ctx.completeAs(Jackson.json(), response);
+                                                    try {
+                                                        Optional<BoardRequest> boardRequest = decryptUser(request, BoardRequest.class);
+
+                                                        Response response = boardRequest.stream()
+                                                                .peek(req -> LOGGER.info("Request to \"/balance/board\" Body: " + req.toString()))
+                                                                .map(balanceRepo::getLiederBoard)
+                                                                .peek(resp -> LOGGER.debug("Response. Body: " + resp.toString()))
+                                                                .map(resp -> {
+                                                                    try {
+                                                                        return new Response(EncryptUtils.encryptAsUser(mapper.writeValueAsString(resp)), null);
+                                                                    } catch (JsonProcessingException e) {
+                                                                        LOGGER.error(e.getMessage(), e);
+                                                                        return new Response(null, e.getMessage());
+                                                                    }
+                                                                }).findFirst()
+                                                                .orElseThrow(() -> new CustomException("Trouble"));
+
+                                                        return ctx.completeAs(Jackson.json(), response);
+                                                    } catch (CustomException e) {
+                                                        LOGGER.error(e.getMessage(), e);
+                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                    }
                                                 }
                                         )
                                 )
