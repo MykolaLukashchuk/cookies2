@@ -1,16 +1,15 @@
 package server.model.responce;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
-@ToString
-public class BalanceResponse extends BaseResponse {
+public class ClickersPriceResponse extends BaseResponse {
     private String token;
-    private Long balance;
     private String message;
 }

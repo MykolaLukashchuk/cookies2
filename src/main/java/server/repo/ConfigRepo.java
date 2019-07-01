@@ -33,7 +33,7 @@ public class ConfigRepo {
         return new ConfigResponse(configMap);
     }
 
-    private ConfigItem getConfigByKey(String key) {
+    public ConfigItem getConfigByKey(String key) {
         return getCollection().find(new BasicDBObject("key", key)).first();
     }
 

@@ -11,8 +11,7 @@ import java.util.Map;
 @Setter
 @Getter
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @AllArgsConstructor
-public class ConfigResponse {
+public class ConfigResponse  extends BaseResponse{
     private Map<String,String> config;
 }

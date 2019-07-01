@@ -7,12 +7,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
-import server.Server;
 import server.model.request.Request;
 import server.model.request.UserRequest;
 import server.model.responce.Response;
 import server.model.responce.UserResponse;
 import server.repo.UserRepo;
+import server.utils.CustomRuntimeException;
 import server.utils.EncryptUtils;
 
 import javax.inject.Inject;
@@ -21,7 +21,8 @@ import java.util.Optional;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.jsonAs;
 import static akka.http.javadsl.server.RequestVals.entityAs;
-import static server.Server.*;
+import static server.Server.mapper;
+import static server.utils.EncryptUtils.*;
 
 public class UsersRoute extends AllDirectives {
     private static final Logger LOGGER = LoggerFactory.getLogger(UsersRoute.class);
@@ -45,7 +46,10 @@ public class UsersRoute extends AllDirectives {
                                                     return userRepo.getAll();
                                                 }).orElseThrow(() -> new CustomException("Wrong request."));
                                         return ctx.completeAs(Jackson.json(), users);
+                                    } catch (CustomRuntimeException e) {
+                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
                                     } catch (Exception e) {
+                                        LOGGER.error(e.getMessage(), e);
                                         return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
                                     }
                                 })
@@ -81,8 +85,10 @@ public class UsersRoute extends AllDirectives {
                                                 }).orElseThrow(() -> new CustomException("Trouble"));
                                                 return ctx.completeAs(Jackson.json(), response);
 
-                                            } catch (CustomException e) {
-                                                LOGGER.info(e.getMessage());
+                                            } catch (CustomRuntimeException e) {
+                                                return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                            } catch (Exception e) {
+                                                LOGGER.error(e.getMessage(), e);
                                                 return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
                                             }
                                         }
@@ -107,23 +113,5 @@ public class UsersRoute extends AllDirectives {
                         )
                 )
         );
-    }
-
-    private <T> Optional<T> decryptUser(Request request, Class<T> t) throws CustomException {
-        try {
-            return Optional.of(mapper.readValue(EncryptUtils.decryptAsUser(request.getBody()), t));
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new CustomException(e.getMessage());
-        }
-    }
-
-    private <T> Optional<T> decryptMaster(Request request, Class<T> t) throws CustomException {
-        try {
-            return Optional.of(mapper.readValue(EncryptUtils.decryptAsMaster(request.getBody()), t));
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new CustomException(e.getMessage());
-        }
     }
 }

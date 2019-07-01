@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
+import server.CustomException;
 
 import java.util.Date;
 import java.util.Objects;
@@ -27,7 +28,10 @@ public class Balance {
         return id.toString();
     }
 
-    public void adjust(Long activity) {
+    public void adjust(Long activity) throws CustomException {
+        if ((balance + activity) < 0) {
+            throw new CustomException("Not enough balance");
+        }
         balance += activity;
     }
 

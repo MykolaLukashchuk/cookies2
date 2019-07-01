@@ -1,16 +1,21 @@
 package server.model.responce;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.Map;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
-public class BalanceResponse extends BaseResponse {
+public class ClickersBalanceResponse extends BaseResponse {
     private String token;
-    private Long balance;
+    private Map<String, Long> clickersBalance;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String message;
+
 }

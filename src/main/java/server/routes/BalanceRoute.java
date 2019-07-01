@@ -7,21 +7,24 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
-import server.Server;
+import server.core.CheckedFunction;
 import server.model.request.BalanceAdjustRequest;
 import server.model.request.BalanceRequest;
 import server.model.request.BoardRequest;
 import server.model.request.Request;
 import server.model.responce.Response;
 import server.repo.BalanceRepo;
+import server.utils.CustomRuntimeException;
 import server.utils.EncryptUtils;
 
 import javax.inject.Inject;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.jsonAs;
 import static akka.http.javadsl.server.RequestVals.entityAs;
-import static server.Server.*;
+import static server.Server.mapper;
+import static server.utils.EncryptUtils.decryptUser;
 
 public class BalanceRoute extends AllDirectives {
     private static final Logger LOGGER = LoggerFactory.getLogger(BalanceRoute.class);
@@ -51,7 +54,7 @@ public class BalanceRoute extends AllDirectives {
 
                                                         Response response = balanceRequest.stream()
                                                                 .peek(req -> LOGGER.info("Request to \"/balance/get\" Body: " + req.toString()))
-                                                                .map(balanceRepo::get)
+                                                                .map(wrapper(balanceRepo::get))
                                                                 .peek(resp -> LOGGER.debug("Response. Body: " + resp.toString()))
                                                                 .map(resp -> {
                                                                     try {
@@ -64,8 +67,10 @@ public class BalanceRoute extends AllDirectives {
                                                                 .orElseThrow(() -> new CustomException("Trouble"));
 
                                                         return ctx.completeAs(Jackson.json(), response);
-                                                    } catch (CustomException e) {
-                                                        LOGGER.info(e.getMessage());
+                                                    } catch (CustomRuntimeException e) {
+                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                    } catch (Exception e) {
+                                                        LOGGER.error(e.getMessage(), e);
                                                         return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
                                                     }
                                                 }
@@ -83,7 +88,7 @@ public class BalanceRoute extends AllDirectives {
 
                                                         Response response = balanceAdjustRequest.stream()
                                                                 .peek(req -> LOGGER.info("Request to \"/balance/adjust\" Body: " + req.toString()))
-                                                                .map(balanceRepo::adjust)
+                                                                .map(wrapper(balanceRepo::adjust))
                                                                 .peek(resp -> LOGGER.debug("Response. Body: " + resp.toString()))
                                                                 .map(resp -> {
                                                                     try {
@@ -96,8 +101,10 @@ public class BalanceRoute extends AllDirectives {
                                                                 .orElseThrow(() -> new CustomException("Trouble"));
 
                                                         return ctx.completeAs(Jackson.json(), response);
-                                                    } catch (CustomException e) {
-                                                        LOGGER.info(e.getMessage());
+                                                    } catch (CustomRuntimeException e) {
+                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                    } catch (Exception e) {
+                                                        LOGGER.error(e.getMessage(), e);
                                                         return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
                                                     }
                                                 }
@@ -115,7 +122,7 @@ public class BalanceRoute extends AllDirectives {
 
                                                         Response response = boardRequest.stream()
                                                                 .peek(req -> LOGGER.info("Request to \"/balance/board\" Body: " + req.toString()))
-                                                                .map(balanceRepo::getLiederBoard)
+                                                                .map(wrapper(balanceRepo::getLiederBoard))
                                                                 .peek(resp -> LOGGER.debug("Response. Body: " + resp.toString()))
                                                                 .map(resp -> {
                                                                     try {
@@ -128,7 +135,9 @@ public class BalanceRoute extends AllDirectives {
                                                                 .orElseThrow(() -> new CustomException("Trouble"));
 
                                                         return ctx.completeAs(Jackson.json(), response);
-                                                    } catch (CustomException e) {
+                                                    } catch (CustomRuntimeException e) {
+                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                    } catch (Exception e) {
                                                         LOGGER.error(e.getMessage(), e);
                                                         return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
                                                     }
@@ -157,14 +166,13 @@ public class BalanceRoute extends AllDirectives {
         );
     }
 
-    private <T> Optional<T> decryptUser(Request request, Class<T> t) throws CustomException {
-        try {
-            return Optional.of(mapper.readValue(EncryptUtils.decryptAsUser(request.getBody()), t));
-        } catch (IllegalArgumentException e) {
-            throw new CustomException(e.getMessage());
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new CustomException(e.getMessage());
-        }
+    private <T, R, E extends Exception> Function<T, R> wrapper(CheckedFunction<T, R, E> fe) {
+        return arg -> {
+            try {
+                return fe.apply(arg);
+            } catch (Exception e) {
+                throw new CustomRuntimeException(e.getMessage());
+            }
+        };
     }
 }

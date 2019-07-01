@@ -1,9 +1,12 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.FixMethodOrder;
+import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class BaseTest {
     final ObjectMapper mapper = new ObjectMapper();
     static final String URL = "http://192.168.0.102:8080";
@@ -15,8 +18,8 @@ public abstract class BaseTest {
         connection.setRequestMethod("PUT");
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setDoOutput(true);
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
         return connection;
     }
 
@@ -25,8 +28,8 @@ public abstract class BaseTest {
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setDoOutput(true);
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
         return connection;
     }
 
@@ -34,8 +37,8 @@ public abstract class BaseTest {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
         connection.setDoOutput(true);
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
         return connection;
     }
 

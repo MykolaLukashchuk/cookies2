@@ -1,8 +1,12 @@
 package server.utils;
 
 import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.CustomException;
 import server.Server;
+import server.model.request.Request;
+import server.routes.ConfigRoute;
 import server.routes.UsersRoute;
 
 import javax.crypto.Cipher;
@@ -13,7 +17,11 @@ import java.io.InputStream;
 import java.util.Optional;
 import java.util.Properties;
 
+import static server.Server.mapper;
+
 public class EncryptUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EncryptUtils.class);
+
     private static String userKey = Server.prop.getProperty("userKey", "YMcMoEGD#t6B4vAP");
     private static String userVector = Server.prop.getProperty("userVector", "sXdN&b@QIgzOdrVk");
     private static String masterKey = Server.prop.getProperty("masterKey", "!ze*nFGT0N$PDAnY");
@@ -79,7 +87,36 @@ public class EncryptUtils {
         System.out.println("encrypted string: " + encrypt(userKey, userVector, "master"));
 
 //        System.out.println(decrypt(userKey, userVector, encrypt(userKey, userVector, "master")));
-        System.out.println(decrypt(userKey, userVector, "VUFBjzqQSLQ9JdpeicrIeQ=="));
+//        System.out.println(decrypt(userKey, userVector, "VUFBjzqQSLQ9JdpeicrIeQ=="));
+        System.out.println(decrypt(userKey, userVector, "y6xWVqMZKvnKKbxTTiXi08+07NGpH8wPTVWoye08S4GgKZWeAB6aAbny2Ds0T3FW+kDYk3s8FsYwuQyAEv1Cxw=="));
     }
 
+    public static  <T> Optional<T> decryptUser(Request request, Class<T> t) throws CustomException {
+        try {
+            return Optional.of(mapper.readValue(EncryptUtils.decryptAsUser(request.getBody()), t));
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new CustomException(e.getMessage());
+        }
+    }
+
+    public static <T> Optional<T> decryptMaster(Request request, Class<T> t) throws CustomException {
+        try {
+            return Optional.of(mapper.readValue(EncryptUtils.decryptAsMaster(request.getBody()), t));
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new CustomException(e.getMessage());
+        }
+    }
+
+    public static Optional<String> decryptMasterAsString(Request request) throws CustomException {
+        try {
+            return Optional.of(EncryptUtils.decryptAsMaster(request.getBody()));
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new CustomException(e.getMessage());
+        }
+    }
 }

@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UsersRouteTest extends BaseTest {
 
     /**

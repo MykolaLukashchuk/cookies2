@@ -1,5 +1,6 @@
 package server.model.responce;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 @Getter
@@ -7,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Response {
+public class Response extends BaseResponse{
     private String body;
     private String message;
 }

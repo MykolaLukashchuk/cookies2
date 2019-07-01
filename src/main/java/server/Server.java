@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import server.model.Group;
 import server.repo.GroupRepo;
 import server.routes.BalanceRoute;
+import server.routes.ClickersRoute;
 import server.routes.ConfigRoute;
 import server.routes.UsersRoute;
 import server.utils.EncryptUtils;
@@ -27,7 +28,6 @@ import javax.inject.Inject;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
@@ -45,6 +45,7 @@ import static akka.http.scaladsl.model.StatusCodes.*;
 public class Server extends HttpApp {
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
     public static Properties prop = new Properties();
+    public static ActorSystem akkaSystem;
 
 //    public static final java.lang.String PATH = "web\\index.html";
     public static final java.lang.String PATH = "web/index.html";
@@ -54,19 +55,21 @@ public class Server extends HttpApp {
     //    public static final java.lang.String PATH = "web/index.html";  //for MAC
     public static final ObjectMapper mapper = new ObjectMapper();
     private final GroupRepo groups;
+    private final ClickersRoute clickersRoute;
 
     @Inject
-    public Server(GroupRepo groups, UsersRoute usersRoute, BalanceRoute balanceRoute, ConfigRoute configRoute) {
+    public Server(GroupRepo groups, UsersRoute usersRoute, BalanceRoute balanceRoute, ConfigRoute configRoute, ClickersRoute clickersRoute) {
         this.groups = groups;
         this.usersRoute = usersRoute;
         this.balanceRoute = balanceRoute;
         this.configRoute = configRoute;
+        this.clickersRoute = clickersRoute;
     }
 
     public static void main(String[] args) throws IOException {
         LOGGER.info("Start App");
         loadProperties();
-        ActorSystem akkaSystem = ActorSystem.create("akka-http-example");
+        akkaSystem = ActorSystem.create("akka-http-clicker");
         Injector injector = Guice.createInjector(new AppModule());
         injector.getInstance(Server.class).bindRoute("0.0.0.0", 8080, akkaSystem);
         final Http http = Http.get(akkaSystem);
@@ -147,7 +150,8 @@ public class Server extends HttpApp {
                 ),
                 usersRoute.getRoute(),
                 balanceRoute.getRoute(),
-                configRoute.getRoute()
+                configRoute.getRoute(),
+                clickersRoute.getRoute()
         );
     }
 

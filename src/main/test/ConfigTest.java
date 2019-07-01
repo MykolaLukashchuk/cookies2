@@ -1,6 +1,11 @@
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import server.model.ConfigItem;
@@ -10,11 +15,12 @@ import server.model.responce.ConfigResponse;
 import server.model.responce.Response;
 import server.utils.EncryptUtils;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ConfigTest extends BaseTest {
 
     public static final String TEST_KEY = "testKey";
@@ -82,4 +88,28 @@ public class ConfigTest extends BaseTest {
         Assert.assertEquals(responseBody.getConfig().size(), 0);
     }
 
+    @Ignore
+    @Test
+    public void addClickersList() throws IOException {
+
+        List<Clicker> clickers = Arrays.asList(new Clicker("1", "first clicker", 1),
+                new Clicker("2", "second clicker", 10),
+                new Clicker("3", "third clicker", 100));
+
+        HttpURLConnection connection = getPutHttpURLConnection(new URL(URL + "/config/put"));
+        ConfigItem configItem = new ConfigItem("clickers", mapper.writeValueAsString(clickers));
+        Request request = new Request(EncryptUtils.encryptAsMaster(mapper.writeValueAsString(configItem)));
+        mapper.writeValue(connection.getOutputStream(), request);
+        Assert.assertEquals(200, connection.getResponseCode());
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Clicker {
+        private String id;
+        private String name;
+        private Integer price;
+    }
 }

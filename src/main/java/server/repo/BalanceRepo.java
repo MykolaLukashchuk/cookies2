@@ -5,7 +5,9 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.CustomException;
 import server.config.MongoClientManager;
+import server.core.CheckedFunction;
 import server.model.Adjustment;
 import server.model.Balance;
 import server.model.User;
@@ -13,11 +15,15 @@ import server.model.request.BalanceAdjustRequest;
 import server.model.request.BalanceRequest;
 import server.model.request.BoardRequest;
 import server.model.responce.BalanceResponse;
+import server.model.responce.BoardResponse;
+import server.utils.CustomRuntimeException;
 
 import javax.inject.Inject;
-import java.util.*;
-
-import server.model.responce.BoardResponse;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 public class BalanceRepo {
 
@@ -59,21 +65,26 @@ public class BalanceRepo {
         return finAll();
     }
 
-    public BalanceResponse get(BalanceRequest request) {
+    private User getUser(String token) throws CustomException {
+        User user = userRepo.find(token);
+        if (user == null) {
+            LOGGER.warn("User not found!");
+            throw new CustomException("User not found!");
+        }
+        return user;
+    }
+
+    public BalanceResponse get(BalanceRequest request) throws CustomException {
         BalanceResponse response = new BalanceResponse();
         response.setToken(request.getToken());
-        User user = userRepo.find(request.getToken());
-        if (user == null) {
-            // TODO: 26.03.2019 добавить исключение
-            LOGGER.warn("User not found!");
-            response.setMessage("User not found!");
-            return response;
-        }
+        User user = getUser(request.getToken());
+
         Balance balance = getCollection().find(new BasicDBObject("userId", request.getToken())).first();
         if (balance == null) {
             balance = new Balance();
-            balance.setBalance(0l);
+            balance.setBalance(0L);
             balance.setUserId(user.getIdAsString());
+            balance.setUpdated(new Date());
             getCollection().insertOne(balance);
         }
         response.setBalance(balance.getBalance());
@@ -82,47 +93,38 @@ public class BalanceRepo {
         return response;
     }
 
-    public BalanceResponse adjust(BalanceAdjustRequest request) {
-        return Optional.of(new BalanceResponse())
-                .map(response -> {
-                    response.setToken(request.getToken());
-                    return response;
-                })
-                .map(response -> {
-                    Optional.ofNullable(getCollection().find(new BasicDBObject("userId", request.getToken())).first())
-                            .map(balance -> {
-                                balance.adjust(request.getActivity());
-                                getCollection().updateOne(new BasicDBObject("userId", request.getToken()),
-                                        new BasicDBObject("$set", new BasicDBObject("balance",
-                                                balance.getBalance()).append("updated", new Date())));
-                                getAdjustmentsCollection().insertOne(new Adjustment(request.getToken(), request.getActivity()));
-                                response.setBalance(balance.getBalance());
-                                return balance;
-                            })
-                            .orElseGet(() -> {
-                                // TODO: 27.03.2019
-                                LOGGER.error("Balance not found!");
-                                response.setMessage("Balance not found!");
-                                return null;
-                            });
-                    return response;
-                })
-                .map(balanceResponse -> {
-                    LOGGER.debug(balanceResponse.toString());
-                    return balanceResponse;
-                })
-                .get();
+    public Long adjust(String token, Long activity) {
+        return Optional.ofNullable(getCollection().find(new BasicDBObject("userId", token)).first())
+                .map(wrapper(balance -> {
+                    balance.adjust(activity);
+                    getCollection().updateOne(new BasicDBObject("userId", token),
+                            new BasicDBObject("$set", new BasicDBObject("balance",
+                                    balance.getBalance()).append("updated", new Date())));
+                    getAdjustmentsCollection().insertOne(new Adjustment(token, activity));
+                    return balance;
+                }))
+                .map(Balance::getBalance)
+                .orElseThrow(() -> {
+                    throw new CustomRuntimeException("Balance not found!");
+                });
     }
 
-    public BoardResponse getLiederBoard(BoardRequest request) {
-        final BoardResponse response = new BoardResponse();
-        final User user = userRepo.find(request.getToken());
-        if (user == null) {
-            // TODO: 26.03.2019 добавить исключение
-            LOGGER.warn("User not found!");
-            response.setMessage("User not found!");
-            return response;
+        public BalanceResponse adjust(BalanceAdjustRequest request) throws CustomException {
+        BalanceResponse response = new BalanceResponse();
+        response.setToken(request.getToken());
+        User user = getUser(request.getToken());
+        try {
+            response.setBalance(adjust(request.getToken(), request.getActivity()));
+        } catch (CustomRuntimeException e) {
+            LOGGER.debug(e.getMessage() + " token: " + request.getToken());
+            response.setMessage(e.getMessage());
         }
+        return response;
+    }
+
+    public BoardResponse getLiederBoard(BoardRequest request) throws CustomException {
+        final BoardResponse response = new BoardResponse();
+        User user = getUser(request.getToken());
 
         final List<Balance> balances = new ArrayList<>();
         final FindIterable<Balance> iterable = getCollection().find(new BasicDBObject("balance", new BasicDBObject("$ne", null))).sort(new BasicDBObject("balance", -1));
@@ -166,5 +168,15 @@ public class BalanceRepo {
             }
         }
         return true;
+    }
+
+    private <T, R, E extends Exception> Function<T, R> wrapper(CheckedFunction<T, R, E> fe) {
+        return arg -> {
+            try {
+                return fe.apply(arg);
+            } catch (Exception e) {
+                throw new CustomRuntimeException(e.getMessage());
+            }
+        };
     }
 }
