@@ -3,19 +3,21 @@ package server.repo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
 import server.config.MongoClientManager;
 import server.model.User;
-import server.model.request.UserRequest;
-import server.model.responce.UserResponse;
+import server.model.request.BoardRequest;
+import server.model.responce.BoardResponse;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public class UserRepo {
 
@@ -23,6 +25,7 @@ public class UserRepo {
 
     private MongoCollection<User> collection;
 
+    @Inject
     public UserRepo() {
     }
 
@@ -53,29 +56,20 @@ public class UserRepo {
         return finAll();
     }
 
-    public UserResponse auth(UserRequest request) throws CustomException {
-
-        if (request.getSeed() == null || request.getSeed().equals("")) {
+    public User findUserBySeed(String seed) throws CustomException {
+        if (seed == null || seed.equals("")) {
             throw new CustomException("Seed cannot be empty.");
         }
+        return getCollection().find(new BasicDBObject("seed", seed)).first();
+    }
 
-        final UserResponse response = new UserResponse();
+    public User insertNewUser(String seed) throws CustomException {
+        getCollection().insertOne(new User(seed));
+        return findUserBySeed(seed);
+    }
 
-        User user = getCollection().find(new BasicDBObject("seed", request.getSeed())).first();
-
-        if (user == null) {
-            getCollection().insertOne(new User(request.getSeed()));
-            response.setNewDevice(true);
-            return response;
-        } else if (user.getNickname() == null && request.getNickname() == null) {
-            response.setNewDevice(true);
-            throw new CustomException("New user's nickname cannot be null.");
-        } else if (user.getNickname() == null && request.getNickname() != null) {
-            user = getCollection().findOneAndUpdate(new BasicDBObject("seed", request.getSeed()), new BasicDBObject("$set", new BasicDBObject("nickname", request.getNickname()).append("updated", new Date())));
-        }
-        response.setToken(user.getIdAsString());
-        response.setNickname(user.getNickname());
-        return response;
+    public void updateUser(User user) {
+        getCollection().replaceOne(new BasicDBObject("_id", user.getId()), user);
     }
 
     public User find(String token) {
@@ -105,5 +99,63 @@ public class UserRepo {
 //                                user.getLogin())));
         }
         return true;
+    }
+
+    // TODO: 03.07.2019 временем понадобится оптимизация
+    public BoardResponse getLiederBoard(BoardRequest request) {
+        final BoardResponse response = new BoardResponse();
+        try {
+            final List<Balance> balances = new ArrayList<>();
+            final FindIterable<User> iterable = getCollection().find(new BasicDBObject("cookiesBalance", new BasicDBObject("$ne", null))).sort(new BasicDBObject("cookiesBalance", -1));
+            for (User user : iterable) {
+                Balance balance = new Balance(user.getIdAsString(), user.getCookiesBalance(), user.getNickname());
+                balances.add(balance);
+            }
+
+            int i = balances.indexOf(new Balance(request.getToken(), 0L, ""));
+            if (i < 6) {
+                balances.stream()
+                        .limit(8)
+                        .forEach(balance -> response.putPosition(balance.getNickname(), balance.getCookiesBalance(), balances.indexOf(balance) + 1));
+            } else {
+                balances.stream()
+                        .limit(3)
+                        .forEachOrdered(balance -> response.putPosition(balance.getNickname(), balance.getCookiesBalance(),
+                                (balances.indexOf(balance) + 1)));
+                i -= 2;
+                for (int j = 0; j < 5; j++) {
+                    Balance balance = balances.get(i++);
+                    response.putPosition(balance.getNickname(), balance.getCookiesBalance(), balances.indexOf(balance) + 1);
+                    if (i > balances.size() - 1) {
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return response;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @ToString
+    class Balance {
+        private String id;
+        private Long cookiesBalance;
+        private String nickname;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Balance balance = (Balance) o;
+            return id.equals(balance.id);
+        }
+
+        @Override
+        public int hashCode() {
+            return id.hashCode();
+        }
     }
 }

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
+import server.config.ActorHandler;
 import server.model.request.Request;
 import server.model.request.UserRequest;
 import server.model.responce.Response;
@@ -22,15 +23,17 @@ import java.util.Optional;
 import static akka.http.javadsl.marshallers.jackson.Jackson.jsonAs;
 import static akka.http.javadsl.server.RequestVals.entityAs;
 import static server.Server.mapper;
-import static server.utils.EncryptUtils.*;
+import static server.utils.EncryptUtils.decryptUser;
 
 public class UsersRoute extends AllDirectives {
     private static final Logger LOGGER = LoggerFactory.getLogger(UsersRoute.class);
     private final UserRepo userRepo;
+    private final ActorHandler actorHandler;
 
     @Inject
-    public UsersRoute(UserRepo userRepo) {
+    public UsersRoute(UserRepo userRepo, ActorHandler actorHandler) {
         this.userRepo = userRepo;
+        this.actorHandler = actorHandler;
     }
 
     public Route getRoute() {
@@ -64,7 +67,8 @@ public class UsersRoute extends AllDirectives {
                                                 Response response = userRequest.map(req -> {
                                                     LOGGER.info("Request to \"/users/auth\" Body: " + req.toString());
                                                     try {
-                                                        return userRepo.auth(userRequest.get());
+//                                                        return userRepo.auth(userRequest.get());
+                                                        return actorHandler.auth(userRequest.get());
                                                     } catch (CustomException e) {
                                                         return new UserResponse(e.getMessage());
                                                     }
@@ -82,7 +86,7 @@ public class UsersRoute extends AllDirectives {
                                                         LOGGER.error(e.getMessage(), e);
                                                         return null;
                                                     }
-                                                }).orElseThrow(() -> new CustomException("Trouble"));
+                                                }).orElseThrow(() -> new CustomRuntimeException("Trouble"));
                                                 return ctx.completeAs(Jackson.json(), response);
 
                                             } catch (CustomRuntimeException e) {

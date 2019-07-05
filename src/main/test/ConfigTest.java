@@ -1,13 +1,7 @@
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
-import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 import server.model.ConfigItem;
 import server.model.request.ConfigRequest;
 import server.model.request.Request;
@@ -20,6 +14,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+
+import static server.model.ConfigItem.Clicker;
 
 public class ConfigTest extends BaseTest {
 
@@ -101,15 +97,5 @@ public class ConfigTest extends BaseTest {
         Request request = new Request(EncryptUtils.encryptAsMaster(mapper.writeValueAsString(configItem)));
         mapper.writeValue(connection.getOutputStream(), request);
         Assert.assertEquals(200, connection.getResponseCode());
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Clicker {
-        private String id;
-        private String name;
-        private Integer price;
     }
 }

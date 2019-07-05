@@ -16,6 +16,7 @@ public class ConfigItem {
     @Setter
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class Clicker {
         private String id;
         private String name;

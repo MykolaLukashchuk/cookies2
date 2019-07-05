@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AdjustClickersBalanceRequest {
+public class ClickersBalanceAdjustRequest {
     private String token;
     private String clickerId;
 }

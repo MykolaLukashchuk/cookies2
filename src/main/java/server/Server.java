@@ -2,7 +2,6 @@ package server;
 
 import akka.actor.ActorSystem;
 import akka.http.javadsl.ConnectionContext;
-import akka.http.javadsl.Http;
 import akka.http.javadsl.HttpsConnectionContext;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
@@ -35,6 +34,8 @@ import java.security.cert.CertificateException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.jsonAs;
 import static akka.http.javadsl.model.HttpResponse.create;
@@ -56,6 +57,7 @@ public class Server extends HttpApp {
     public static final ObjectMapper mapper = new ObjectMapper();
     private final GroupRepo groups;
     private final ClickersRoute clickersRoute;
+    public static final Executor LOG_POOL = Executors.newFixedThreadPool(10);
 
     @Inject
     public Server(GroupRepo groups, UsersRoute usersRoute, BalanceRoute balanceRoute, ConfigRoute configRoute, ClickersRoute clickersRoute) {
@@ -72,7 +74,8 @@ public class Server extends HttpApp {
         akkaSystem = ActorSystem.create("akka-http-clicker");
         Injector injector = Guice.createInjector(new AppModule());
         injector.getInstance(Server.class).bindRoute("0.0.0.0", 8080, akkaSystem);
-        final Http http = Http.get(akkaSystem);
+
+//        final Http http = Http.get(akkaSystem);
 
 //        boolean useHttps = false; // pick value from anywhere
 //        if ( useHttps ) {

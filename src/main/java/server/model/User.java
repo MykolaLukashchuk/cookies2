@@ -4,13 +4,17 @@ package server.model;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.Objects;
 
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -21,13 +25,11 @@ public class User{
     private Date created;
     private Date updated;
     private String seed;
-
-    public User(String seed, String nickname) {
-        this.seed = seed;
-        this.nickname = nickname;
-        created = new Date();
-        updated = new Date();
-    }
+    private Long cookiesBalance;
+    /**
+     * key - id clicker
+     */
+    private Map<String, Long> clickerBalance;
 
     public User(String seed) {
         this.seed = seed;
@@ -38,5 +40,10 @@ public class User{
     @JsonGetter ("id")
     public String getIdAsString() {
         return id.toString();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id.toString());
     }
 }

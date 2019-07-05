@@ -1,5 +1,5 @@
 import org.apache.http.HttpStatus;
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -19,21 +19,27 @@ import static org.junit.Assert.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class BalanceRouteTest extends BaseTest {
+    public static final String SEED = "test4";
+    public String testToken;
 
-    public static final String TEST_TOKEN = "5ccc9d00c994ac568669d53a";
+    @Before
+    public void init() throws Exception {
+        testToken = login(SEED);
+    }
 
     @Test
     public void t1getBalanceTest() throws Exception {
         HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/balance/get"));
 
         BalanceRequest balanceRequest = new BalanceRequest();
-        balanceRequest.setToken("5ccc9d00c994ac568669d53a");
+        balanceRequest.setToken(testToken);
 
         Request request = new Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(balanceRequest)));
 
         mapper.writeValue(connection.getOutputStream(), request);
 
         Response response = mapper.readValue(connection.getInputStream(), Response.class);
+        System.out.println(response.toString());
         assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
         assertNotNull(response);
         assertNotNull(response.getBody());
@@ -50,30 +56,31 @@ public class BalanceRouteTest extends BaseTest {
 
     @Test
     public void t2adjustBalanceTest() throws Exception {
+        long activity = 10L;
         HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/balance/get"));
 
         BalanceRequest balanceRequest = new BalanceRequest();
-        balanceRequest.setToken(TEST_TOKEN);
+        balanceRequest.setToken(testToken);
 
         mapper.writeValue(connection.getOutputStream(), new Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(balanceRequest))));
         Response response = mapper.readValue(connection.getInputStream(), Response.class);
 
         BalanceResponse responseBody = mapper.readValue(EncryptUtils.decryptAsUser(response.getBody()), BalanceResponse.class);
-        System.out.println(responseBody.toString());
+        System.out.println("Old balance: " + responseBody.toString());
         Long firstBalance = responseBody.getBalance();
 
         BalanceAdjustRequest balanceAdjustRequest = new BalanceAdjustRequest();
-        balanceAdjustRequest.setToken(TEST_TOKEN);
-        balanceAdjustRequest.setActivity(10L);
+        balanceAdjustRequest.setToken(testToken);
+        balanceAdjustRequest.setActivity(activity);
 
         connection = getPostHttpURLConnection(new URL(URL + "/balance/adjust"));
         mapper.writeValue(connection.getOutputStream(), new Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(balanceAdjustRequest))));
         response = mapper.readValue(connection.getInputStream(), Response.class);
 
         responseBody = mapper.readValue(EncryptUtils.decryptAsUser(response.getBody()), BalanceResponse.class);
-        System.out.println(responseBody.toString());
+        System.out.println("New Balnce" + responseBody.toString());
 
-        assertEquals(10L, responseBody.getBalance() - firstBalance);
+        assertEquals(activity, responseBody.getBalance() - firstBalance);
     }
 
     @Test
@@ -81,10 +88,12 @@ public class BalanceRouteTest extends BaseTest {
         HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/balance/board"));
 
         BoardRequest boardRequest = new BoardRequest();
-        boardRequest.setToken(TEST_TOKEN);
+        boardRequest.setToken(testToken);
 
         mapper.writeValue(connection.getOutputStream(), new Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(boardRequest))));
         Response response = mapper.readValue(connection.getInputStream(), Response.class);
+
+        System.out.println(response);
 
         BoardResponse responseBody = mapper.readValue(EncryptUtils.decryptAsUser(response.getBody()), BoardResponse.class);
         System.out.println(responseBody.toString());
@@ -100,7 +109,7 @@ public class BalanceRouteTest extends BaseTest {
         HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/balance/get"));
 
         BalanceRequest balanceRequest = new BalanceRequest();
-        balanceRequest.setToken(TEST_TOKEN);
+        balanceRequest.setToken(testToken);
 
         mapper.writeValue(connection.getOutputStream(), new Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(balanceRequest))));
         Response response = mapper.readValue(connection.getInputStream(), Response.class);
@@ -110,7 +119,7 @@ public class BalanceRouteTest extends BaseTest {
         Long firstBalance = responseBody.getBalance();
 
         BalanceAdjustRequest balanceAdjustRequest = new BalanceAdjustRequest();
-        balanceAdjustRequest.setToken(TEST_TOKEN);
+        balanceAdjustRequest.setToken(testToken);
         balanceAdjustRequest.setActivity(-1 * (firstBalance + 10L));
 
         connection = getPostHttpURLConnection(new URL(URL + "/balance/adjust"));
@@ -125,6 +134,6 @@ public class BalanceRouteTest extends BaseTest {
 
         assertNull(responseBody.getBalance());
         assertEquals(responseBody.getMessage(), "Not enough balance");
-        assertEquals(responseBody.getToken(), TEST_TOKEN);
+        assertEquals(responseBody.getToken(), testToken);
     }
 }

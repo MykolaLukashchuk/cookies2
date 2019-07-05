@@ -18,4 +18,13 @@ public class ClickersBalanceResponse extends BaseResponse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String message;
 
+    public ClickersBalanceResponse(String token, Map<String, Long> balance) {
+        this.token = token;
+        clickersBalance = balance;
+    }
+
+    public ClickersBalanceResponse(String token, String message) {
+        this.token = token;
+        this.message = message;
+    }
 }
