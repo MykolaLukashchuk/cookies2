@@ -14,8 +14,8 @@ import java.net.URL;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class BaseTest {
     static final ObjectMapper mapper = new ObjectMapper();
-    static final String URL = "http://192.168.0.102:8080";
-//    static final String URL = "http://192.168.0.104:8080";
+    //    static final String URL = "http://192.168.0.102:8080";
+    static final String URL = "http://192.168.0.101:8080";
 
     protected static  HttpURLConnection getPutHttpURLConnection(URL url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();

@@ -4,6 +4,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import com.google.inject.Singleton;
+import com.mongodb.MongoSocketWriteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
@@ -43,7 +44,16 @@ public class ActorHandler {
 
     public UserResponse auth(UserRequest request) throws CustomException {
         final UserResponse response = new UserResponse();
-        User user = userRepo.findUserBySeed(request.getSeed());
+        User user = null;
+        int i = 0;
+        while (user == null & i < 3) {
+            try {
+                user = userRepo.findUserBySeed(request.getSeed());
+            } catch (MongoSocketWriteException e) {
+                LOGGER.warn(e.getMessage());
+            }
+            i++;
+        }
         if (user == null) {
             userRepo.insertNewUser(request.getSeed());
             response.setNewDevice(true);
