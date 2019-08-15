@@ -57,7 +57,7 @@ public class Server extends HttpApp {
     public static final ObjectMapper mapper = new ObjectMapper();
     private final GroupRepo groups;
     private final ClickersRoute clickersRoute;
-    public static final Executor LOG_POOL = Executors.newFixedThreadPool(10);
+    public static final Executor LOG_POOL = Executors.newFixedThreadPool(100);
 
     @Inject
     public Server(GroupRepo groups, UsersRoute usersRoute, BalanceRoute balanceRoute, ConfigRoute configRoute, ClickersRoute clickersRoute) {
@@ -73,7 +73,8 @@ public class Server extends HttpApp {
         loadProperties();
         akkaSystem = ActorSystem.create("akka-http-clicker");
         Injector injector = Guice.createInjector(new AppModule());
-        injector.getInstance(Server.class).bindRoute("0.0.0.0", 8080, akkaSystem);
+        int port = Integer.parseInt(Server.prop.getProperty("port", "8080"));
+        injector.getInstance(Server.class).bindRoute("0.0.0.0", port, akkaSystem);
 
 //        final Http http = Http.get(akkaSystem);
 

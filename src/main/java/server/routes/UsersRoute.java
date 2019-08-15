@@ -3,7 +3,12 @@ package server.routes;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.CustomException;
@@ -17,6 +22,7 @@ import server.utils.CustomRuntimeException;
 import server.utils.EncryptUtils;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,17 +45,23 @@ public class UsersRoute extends AllDirectives {
     public Route getRoute() {
         return pathPrefix("users").route(
                 post(pathEndOrSingleSlash().route(
-                        handleWith(entityAs(jsonAs(Request.class)),
+                        handleWith(entityAs(jsonAs(MasterRequest.class)),
                                 (ctx, request) -> {
                                     try {
                                         Optional<String> requestString = Optional.of(EncryptUtils.decryptAsMaster(request.getBody()));
                                         List users = requestString.filter(req -> req.equals("master"))
                                                 .map(s -> {
                                                     LOGGER.info("Request to \"/users\"");
+                                                    if (request.getSeed() != null) {
+                                                        return Arrays.asList(userRepo.findUserBySeed(request.getSeed()));
+                                                    } else if (request.getUserId() != null) {
+                                                        return Arrays.asList(userRepo.find(request.getUserId()));
+                                                    }
                                                     return userRepo.getAll();
                                                 }).orElseThrow(() -> new CustomException("Wrong request."));
                                         return ctx.completeAs(Jackson.json(), users);
                                     } catch (CustomRuntimeException e) {
+                                        LOGGER.error(e.getMessage());
                                         return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
                                     } catch (Exception e) {
                                         LOGGER.error(e.getMessage(), e);
@@ -62,7 +74,7 @@ public class UsersRoute extends AllDirectives {
                                 .route(handleWith(entityAs(jsonAs(Request.class)),
                                         (ctx, request) -> {
                                             try {
-                                                Optional<UserRequest> userRequest = decryptUser(request, UserRequest.class);
+                                                Optional<UserRequest> userRequest = decryptUser(request.getBody(), UserRequest.class);
 
                                                 Response response = userRequest.map(req -> {
                                                     LOGGER.info("Request to \"/users/auth\" Body: " + req.toString());
@@ -90,6 +102,7 @@ public class UsersRoute extends AllDirectives {
                                                 return ctx.completeAs(Jackson.json(), response);
 
                                             } catch (CustomRuntimeException e) {
+                                                LOGGER.error(e.getMessage());
                                                 return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
                                             } catch (Exception e) {
                                                 LOGGER.error(e.getMessage(), e);
@@ -117,5 +130,16 @@ public class UsersRoute extends AllDirectives {
                         )
                 )
         );
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class MasterRequest {
+        private String body;
+        private String userId;
+        private String seed;
     }
 }

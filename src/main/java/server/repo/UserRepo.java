@@ -9,11 +9,11 @@ import lombok.ToString;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.CustomException;
 import server.config.MongoClientManager;
 import server.model.User;
 import server.model.request.BoardRequest;
 import server.model.responce.BoardResponse;
+import server.utils.CustomRuntimeException;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -56,14 +56,14 @@ public class UserRepo {
         return finAll();
     }
 
-    public User findUserBySeed(String seed) throws CustomException {
+    public User findUserBySeed(String seed) {
         if (seed == null || seed.equals("")) {
-            throw new CustomException("Seed cannot be empty.");
+            throw new CustomRuntimeException("Seed cannot be empty.");
         }
         return getCollection().find(new BasicDBObject("seed", seed)).first();
     }
 
-    public User insertNewUser(String seed) throws CustomException {
+    public User insertNewUser(String seed) {
         getCollection().insertOne(new User(seed));
         return findUserBySeed(seed);
     }

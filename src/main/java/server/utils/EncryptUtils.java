@@ -1,22 +1,21 @@
 package server.utils;
 
-import static server.Server.mapper;
-
+import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.CustomException;
 import server.Server;
 import server.model.request.Request;
 
-import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.Properties;
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+
+import static server.Server.mapper;
 
 public class EncryptUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(EncryptUtils.class);
@@ -47,19 +46,23 @@ public class EncryptUtils {
         return null;
     }
 
-    private static String decrypt(String key, String initVector, String encrypted) throws Exception {
-        IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-        SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+    private static String decrypt(String key, String initVector, String encrypted) {
+        try {
+            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
 
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-        cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
 
-        byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
+            byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
 
-        return new String(original);
+            return new String(original);
+        } catch (Exception e) {
+            throw new CustomRuntimeException(e.getMessage());
+        }
     }
 
-    public static String decryptAsUser(String encrypted) throws Exception {
+    public static String decryptAsUser(String encrypted) {
         return decrypt(userKey, userVector, encrypted);
     }
 
@@ -67,7 +70,7 @@ public class EncryptUtils {
         return encrypt(userKey, userVector, value);
     }
 
-    public static String decryptAsMaster(String encrypted) throws Exception {
+    public static String decryptAsMaster(String encrypted) {
         return decrypt(masterKey, masterVector, encrypted);
     }
 
@@ -90,23 +93,28 @@ public class EncryptUtils {
         System.out.println(decrypt(userKey, userVector, "y6xWVqMZKvnKKbxTTiXi08+07NGpH8wPTVWoye08S4GgKZWeAB6aAbny2Ds0T3FW+kDYk3s8FsYwuQyAEv1Cxw=="));
     }
 
-    public static  <T> Optional<T> decryptUser(Request request, Class<T> t) throws CustomException {
+    public static <T> Optional<T> decryptUser(Request request, Class<T> t) {
+        return decryptUser(request.getBody(), t);
+    }
+
+    public static <T> Optional<T> decryptUser(String body, Class<T> t) {
         try {
-            return Optional.of(mapper.readValue(EncryptUtils.decryptAsUser(request.getBody()), t));
-        } catch (IllegalArgumentException e) {
-          throw new CustomRuntimeException(e.getMessage());
+            return Optional.of(mapper.readValue(EncryptUtils.decryptAsUser(body), t));
+        } catch (IllegalArgumentException | CustomRuntimeException e) {
+            LOGGER.error(e.getMessage());
+            throw new CustomRuntimeException(e.getMessage());
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            throw new CustomException(e.getMessage());
+            throw new CustomRuntimeException(e.getMessage());
         }
     }
 
-    public static <T> Optional<T> decryptMaster(Request request, Class<T> t) throws CustomException {
+    public static <T> Optional<T> decryptMaster(Request request, Class<T> t) {
         try {
             return Optional.of(mapper.readValue(EncryptUtils.decryptAsMaster(request.getBody()), t));
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            throw new CustomException(e.getMessage());
+            throw new CustomRuntimeException(e.getMessage());
         }
     }
 

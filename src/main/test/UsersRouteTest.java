@@ -1,9 +1,7 @@
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
-import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 import server.model.request.Request;
 import server.model.request.UserRequest;
 import server.model.responce.Response;
@@ -54,10 +52,11 @@ public class UsersRouteTest extends BaseTest {
         UserRequest request = new UserRequest();
         request.setSeed("test4");
 //        request.setNickname("Test4");
+        System.out.println("Request: " + request.toString());
 
-        String requestString = mapper.writeValueAsString(request);
-
-        mapper.writeValue(connection.getOutputStream(), new Request(EncryptUtils.encryptAsUser(requestString)));
+        Request finalRequest = new Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(request)));
+        System.out.println("Request: " + finalRequest.toString());
+        mapper.writeValue(connection.getOutputStream(), finalRequest);
 
         Response response = mapper.readValue(connection.getInputStream(), Response.class);
 

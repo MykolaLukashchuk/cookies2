@@ -34,7 +34,10 @@ public class BalanceRouteTest extends BaseTest {
         BalanceRequest balanceRequest = new BalanceRequest();
         balanceRequest.setToken(testToken);
 
+        System.out.println("Request: " + balanceRequest.toString());
+
         Request request = new Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(balanceRequest)));
+        System.out.println("Request:" + request.toString());
 
         mapper.writeValue(connection.getOutputStream(), request);
 
@@ -56,7 +59,7 @@ public class BalanceRouteTest extends BaseTest {
 
     @Test
     public void t2adjustBalanceTest() throws Exception {
-        long activity = 10L;
+        long activity = 1000000L;
         HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/balance/get"));
 
         BalanceRequest balanceRequest = new BalanceRequest();

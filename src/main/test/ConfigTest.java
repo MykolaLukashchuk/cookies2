@@ -90,7 +90,8 @@ public class ConfigTest extends BaseTest {
 
         List<Clicker> clickers = Arrays.asList(new Clicker("1", "first clicker", 1),
                 new Clicker("2", "second clicker", 10),
-                new Clicker("3", "third clicker", 100));
+                new Clicker("3", "third clicker", 100),
+                new Clicker("4", "forth clicker", 1000));
 
         HttpURLConnection connection = getPutHttpURLConnection(new URL(URL + "/config/put"));
         ConfigItem configItem = new ConfigItem("clickers", mapper.writeValueAsString(clickers));

@@ -68,7 +68,11 @@ public class BalanceRoute extends AllDirectives {
                                                                 .peek(resp -> LOGGER.debug("Response. Body: " + resp.toString()))
                                                                 .map(resp -> {
                                                                     try {
-                                                                        return new Response(EncryptUtils.encryptAsUser(mapper.writeValueAsString(resp)), null);
+                                                                        if (request.getMasterBody() != null && EncryptUtils.decryptAsMaster(request.getMasterBody()).equals("master")) {
+                                                                            return new Response(mapper.writeValueAsString(resp), null);
+                                                                        } else {
+                                                                            return new Response(EncryptUtils.encryptAsUser(mapper.writeValueAsString(resp)), null);
+                                                                        }
                                                                     } catch (JsonProcessingException e) {
                                                                         LOGGER.error(e.getMessage(), e);
                                                                         return new Response(null, e.getMessage());
