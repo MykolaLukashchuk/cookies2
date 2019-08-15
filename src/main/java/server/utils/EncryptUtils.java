@@ -1,23 +1,22 @@
 package server.utils;
 
-import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static server.Server.mapper;
+
 import server.CustomException;
 import server.Server;
 import server.model.request.Request;
-import server.routes.ConfigRoute;
-import server.routes.UsersRoute;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.Properties;
-
-import static server.Server.mapper;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class EncryptUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(EncryptUtils.class);
@@ -95,7 +94,7 @@ public class EncryptUtils {
         try {
             return Optional.of(mapper.readValue(EncryptUtils.decryptAsUser(request.getBody()), t));
         } catch (IllegalArgumentException e) {
-            throw new CustomException(e.getMessage());
+          throw new CustomRuntimeException(e.getMessage());
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new CustomException(e.getMessage());
