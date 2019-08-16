@@ -1,16 +1,21 @@
 package server.repo;
 
 import com.google.inject.Singleton;
+
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import server.config.MongoClientManager;
 import server.model.ConfigItem;
 import server.model.request.ConfigRequest;
 import server.model.responce.ConfigResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Singleton
@@ -66,5 +71,14 @@ public class ConfigRepo {
 
     public Boolean deleteConfig(ConfigItem request) {
         return getCollection().deleteOne(new BasicDBObject("key", request.getKey())).wasAcknowledged();
+    }
+
+    public List<ConfigItem> getAll() {
+        List<ConfigItem> list = new ArrayList<>();
+        FindIterable<ConfigItem> iterable = getCollection().find();
+        for (ConfigItem doc : iterable) {
+            list.add(doc);
+        }
+        return list;
     }
 }

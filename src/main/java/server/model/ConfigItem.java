@@ -21,5 +21,9 @@ public class ConfigItem {
         private String id;
         private String name;
         private Integer price;
+        /**
+         * Delay in sec.
+         */
+        private Integer delay;
     }
 }

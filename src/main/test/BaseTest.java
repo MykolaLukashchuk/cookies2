@@ -1,11 +1,12 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.FixMethodOrder;
-import org.junit.runners.MethodSorters;
 import server.model.request.Request;
 import server.model.request.UserRequest;
 import server.model.responce.Response;
 import server.model.responce.UserResponse;
 import server.utils.EncryptUtils;
+
+import org.junit.FixMethodOrder;
+import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -14,8 +15,9 @@ import java.net.URL;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class BaseTest {
     static final ObjectMapper mapper = new ObjectMapper();
-    //        static final String URL = "http://127.0.0.1:8080";
+    //    static final String URL = "http://192.168.0.102:8080";
     static final String URL = "http://192.168.0.101:8080";
+//    static final String URL = "http://178.158.212.44:8080";
 
     protected static  HttpURLConnection getPutHttpURLConnection(URL url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();

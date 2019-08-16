@@ -1,7 +1,5 @@
-import org.apache.http.HttpStatus;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import static server.model.ConfigItem.Clicker;
+
 import server.model.ConfigItem;
 import server.model.request.ConfigRequest;
 import server.model.request.Request;
@@ -9,13 +7,16 @@ import server.model.responce.ConfigResponse;
 import server.model.responce.Response;
 import server.utils.EncryptUtils;
 
+import org.apache.http.HttpStatus;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
-
-import static server.model.ConfigItem.Clicker;
 
 public class ConfigTest extends BaseTest {
 
@@ -88,10 +89,10 @@ public class ConfigTest extends BaseTest {
     @Test
     public void addClickersList() throws IOException {
 
-        List<Clicker> clickers = Arrays.asList(new Clicker("1", "first clicker", 1),
-                new Clicker("2", "second clicker", 10),
-                new Clicker("3", "third clicker", 100),
-                new Clicker("4", "forth clicker", 1000));
+        List<Clicker> clickers = Arrays.asList(new Clicker("1", "first clicker", 1, 60),
+            new Clicker("2", "second clicker", 10, 120),
+            new Clicker("3", "third clicker", 100, 240),
+            new Clicker("4", "forth clicker", 1000, 480));
 
         HttpURLConnection connection = getPutHttpURLConnection(new URL(URL + "/config/put"));
         ConfigItem configItem = new ConfigItem("clickers", mapper.writeValueAsString(clickers));
