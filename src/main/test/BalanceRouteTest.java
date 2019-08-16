@@ -1,8 +1,7 @@
-import org.apache.http.HttpStatus;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import server.model.request.BalanceAdjustRequest;
 import server.model.request.BalanceRequest;
 import server.model.request.BoardRequest;
@@ -12,10 +11,14 @@ import server.model.responce.BoardResponse;
 import server.model.responce.Response;
 import server.utils.EncryptUtils;
 
+import org.apache.http.HttpStatus;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import static org.junit.Assert.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class BalanceRouteTest extends BaseTest {
@@ -59,7 +62,7 @@ public class BalanceRouteTest extends BaseTest {
 
     @Test
     public void t2adjustBalanceTest() throws Exception {
-        long activity = 1000000L;
+        long activity = 100000000L;
         HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/balance/get"));
 
         BalanceRequest balanceRequest = new BalanceRequest();
