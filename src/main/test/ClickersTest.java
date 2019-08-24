@@ -103,7 +103,9 @@ public class ClickersTest extends BaseTest {
         mapper.writeValue(connection.getOutputStream(), request);
         Response response = mapper.readValue(connection.getInputStream(), Response.class);
         System.out.println("Response: " + response.toString());
-        CollectResponse collectResponse = mapper.readValue(EncryptUtils.decryptAsUser(response.getBody()), CollectResponse.class);
+        String content = EncryptUtils.decryptAsUser(response.getBody());
+        System.out.println(content);
+        CollectResponse collectResponse = mapper.readValue(content, CollectResponse.class);
         System.out.println("Response: " + collectResponse.toString());
 
         // TODO: 24.08.2019 Доделать проверку сбора кликеров. Лучше будет выглядить кода юзер будет сетится специально для тестов.
@@ -116,7 +118,9 @@ public class ClickersTest extends BaseTest {
         mapper.writeValue(connection.getOutputStream(), request);
         Response response = mapper.readValue(connection.getInputStream(), Response.class);
         System.out.println("Response: " + response.toString());
-        ClickersBalanceResponse responseBody = mapper.readValue(EncryptUtils.decryptAsUser(response.getBody()), ClickersBalanceResponse.class);
+        String content = EncryptUtils.decryptAsUser(response.getBody());
+        System.out.println(content);
+        ClickersBalanceResponse responseBody = mapper.readValue(content, ClickersBalanceResponse.class);
         System.out.println(responseBody.toString());
         return responseBody;
     }

@@ -37,11 +37,12 @@ public class ConfigTest extends BaseTest {
     public void t2GetConfigTest() throws Exception {
         HttpURLConnection connection = getPostHttpURLConnection(new URL(URL + "/config/get"));
         ConfigRequest request = new ConfigRequest();
-        request.setKeys(Arrays.asList(TEST_KEY));
+        request.setKeys(Arrays.asList(TEST_KEY, ConfigRepo.CLICKERS));
         Request cryptRequest = new Request(EncryptUtils.encryptAsUser(mapper.writeValueAsString(request)));
         mapper.writeValue(connection.getOutputStream(), cryptRequest);
 
         Response response = mapper.readValue(connection.getInputStream(), Response.class);
+        System.out.println("Response: " + response);
 
         Assert.assertEquals(200, connection.getResponseCode());
         Assert.assertEquals(connection.getResponseCode(), HttpStatus.SC_OK);
@@ -49,12 +50,15 @@ public class ConfigTest extends BaseTest {
         Assert.assertNull(response.getMessage());
         Assert.assertNotNull(response.getBody());
 
-        ConfigResponse responseBody = mapper.readValue(EncryptUtils.decryptAsUser(response.getBody()), ConfigResponse.class);
+        String content = EncryptUtils.decryptAsUser(response.getBody());
+        System.out.println("Response body as string: " + content);
+        ConfigResponse responseBody = mapper.readValue(content, ConfigResponse.class);
+        System.out.println("ResponseBody: " + responseBody);
 
         Assert.assertNotNull(responseBody);
         Assert.assertNotNull(responseBody.getConfig().get(TEST_KEY));
         Assert.assertEquals(responseBody.getConfig().get(TEST_KEY), TEST_VALUE);
-        Assert.assertEquals(responseBody.getConfig().size(), 1);
+        Assert.assertEquals(responseBody.getConfig().size(), 2);
     }
 
     @Test
