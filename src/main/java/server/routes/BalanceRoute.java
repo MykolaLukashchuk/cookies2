@@ -3,7 +3,9 @@ package server.routes;
 import akka.actor.ActorRef;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.server.AllDirectives;
+import akka.http.javadsl.server.RequestContext;
 import akka.http.javadsl.server.Route;
+import akka.http.javadsl.server.RouteResult;
 import akka.pattern.Patterns;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
@@ -82,10 +84,10 @@ public class BalanceRoute extends AllDirectives {
 
                                                         return ctx.completeAs(Jackson.json(), response);
                                                     } catch (CustomRuntimeException e) {
-                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                        return getRouteError(ctx, e);
                                                     } catch (Exception e) {
                                                         LOGGER.error(e.getMessage(), e);
-                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                        return getRouteError(ctx, e);
                                                     }
                                                 }
                                         )
@@ -98,9 +100,7 @@ public class BalanceRoute extends AllDirectives {
                                         handleWith(entityAs(jsonAs(Request.class)),
                                                 (ctx, request) -> {
                                                     try {
-                                                        Optional<BalanceAdjustRequest> balanceAdjustRequest = decryptUser(request, BalanceAdjustRequest.class);
-
-                                                        Response response = balanceAdjustRequest.stream()
+                                                        Response response = decryptUser(request, BalanceAdjustRequest.class).stream()
                                                                 .peek(req -> LOGGER.info("Request to \"/balance/adjust\" Body: " + req.toString()))
                                                                 .map(wrapper(req -> {
                                                                     ActorRef actor = actorHandler.getActor(req.getToken());
@@ -123,10 +123,10 @@ public class BalanceRoute extends AllDirectives {
 
                                                         return ctx.completeAs(Jackson.json(), response);
                                                     } catch (CustomRuntimeException e) {
-                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                        return getRouteError(ctx, e);
                                                     } catch (Exception e) {
                                                         LOGGER.error(e.getMessage(), e);
-                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                        return getRouteError(ctx, e);
                                                     }
                                                 }
                                         )
@@ -139,9 +139,8 @@ public class BalanceRoute extends AllDirectives {
                                         handleWith(entityAs(jsonAs(Request.class)),
                                                 (ctx, request) -> {
                                                     try {
-                                                        Optional<BoardRequest> boardRequest = decryptUser(request, BoardRequest.class);
-
-                                                        Response response = boardRequest.stream()
+                                                        Response response = decryptUser(request, BoardRequest.class)
+                                                                .stream()
                                                                 .peek(req -> LOGGER.info("Request to \"/balance/board\" Body: " + req.toString()))
                                                                 .map(wrapper(req -> {
                                                                     ActorRef actor = actorHandler.getActor(req.getToken());
@@ -163,10 +162,10 @@ public class BalanceRoute extends AllDirectives {
 
                                                         return ctx.completeAs(Jackson.json(), response);
                                                     } catch (CustomRuntimeException e) {
-                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                        return getRouteError(ctx, e);
                                                     } catch (Exception e) {
                                                         LOGGER.error(e.getMessage(), e);
-                                                        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
+                                                        return getRouteError(ctx, e);
                                                     }
                                                 }
                                         )
@@ -174,6 +173,10 @@ public class BalanceRoute extends AllDirectives {
                         )
                 )
         );
+    }
+
+    private RouteResult getRouteError(RequestContext ctx, Exception e) {
+        return ctx.completeAs(Jackson.json(), new Response(null, e.getMessage()));
     }
 
     private <T, R, E extends Exception> Function<T, R> wrapper(CheckedFunction<T, R, E> fe) {

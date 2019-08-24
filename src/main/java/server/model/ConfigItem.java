@@ -25,5 +25,6 @@ public class ConfigItem {
          * Delay in sec.
          */
         private Integer delay;
+        private Long benefit;
     }
 }

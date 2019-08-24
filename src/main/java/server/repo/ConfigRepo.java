@@ -1,28 +1,33 @@
 package server.repo;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.inject.Singleton;
-
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import server.Server;
 import server.config.MongoClientManager;
 import server.model.ConfigItem;
 import server.model.request.ConfigRequest;
 import server.model.responce.ConfigResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static server.model.ConfigItem.Clicker;
+
 @Singleton
 public class ConfigRepo {
+    public static final String CLICKERS = "clickers";
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepo.class);
     private MongoCollection<ConfigItem> collection;
     private Map<String, ConfigItem> config = new HashMap<>();
+    private Map<String, Clicker> clickerConfig;
 
     private MongoCollection<ConfigItem> getCollection() {
         if (collection == null) {
@@ -80,5 +85,20 @@ public class ConfigRepo {
             list.add(doc);
         }
         return list;
+    }
+
+    public Map<String, Clicker> getClickersConfig() {
+        if (clickerConfig == null) {
+            try {
+                clickerConfig = new HashMap<>();
+                ((List<Clicker>) Server.mapper.readValue(getConfigByKey(CLICKERS).getValue(), new TypeReference<List<Clicker>>() {
+                }))
+                        .stream()
+                        .forEach(clicker -> clickerConfig.put(clicker.getId(), clicker));
+            } catch (IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+        return clickerConfig;
     }
 }

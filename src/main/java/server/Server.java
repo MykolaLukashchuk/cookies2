@@ -57,7 +57,7 @@ public class Server extends HttpApp {
     public static final ObjectMapper mapper = new ObjectMapper();
     private final GroupRepo groups;
     private final ClickersRoute clickersRoute;
-    public static final Executor LOG_POOL = Executors.newFixedThreadPool(100);
+    public static final Executor LOG_POOL_EXECUTOR = Executors.newFixedThreadPool(100);
 
     @Inject
     public Server(GroupRepo groups, UsersRoute usersRoute, BalanceRoute balanceRoute, ConfigRoute configRoute, ClickersRoute clickersRoute) {

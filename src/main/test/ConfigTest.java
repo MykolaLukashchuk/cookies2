@@ -5,6 +5,7 @@ import server.model.request.ConfigRequest;
 import server.model.request.Request;
 import server.model.responce.ConfigResponse;
 import server.model.responce.Response;
+import server.repo.ConfigRepo;
 import server.utils.EncryptUtils;
 
 import org.apache.http.HttpStatus;
@@ -89,13 +90,13 @@ public class ConfigTest extends BaseTest {
     @Test
     public void addClickersList() throws IOException {
 
-        List<Clicker> clickers = Arrays.asList(new Clicker("1", "first clicker", 1, 60),
-            new Clicker("2", "second clicker", 10, 120),
-            new Clicker("3", "third clicker", 100, 240),
-            new Clicker("4", "forth clicker", 1000, 480));
+        List<Clicker> clickers = Arrays.asList(new Clicker("1", "first clicker", 1, 60, 1L),
+            new Clicker("2", "second clicker", 10, 80, 10L),
+            new Clicker("3", "third clicker", 100, 100, 100L),
+            new Clicker("4", "forth clicker", 1000, 120, 1000L));
 
         HttpURLConnection connection = getPutHttpURLConnection(new URL(URL + "/config/put"));
-        ConfigItem configItem = new ConfigItem("clickers", mapper.writeValueAsString(clickers));
+        ConfigItem configItem = new ConfigItem(ConfigRepo.CLICKERS, mapper.writeValueAsString(clickers));
         Request request = new Request(EncryptUtils.encryptAsMaster(mapper.writeValueAsString(configItem)));
         mapper.writeValue(connection.getOutputStream(), request);
         Assert.assertEquals(200, connection.getResponseCode());

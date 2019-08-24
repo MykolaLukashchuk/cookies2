@@ -10,6 +10,7 @@ import lombok.Setter;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,8 +29,14 @@ public class User{
     private Long cookiesBalance;
     /**
      * key - id clicker
+     * value - clickers balance
      */
     private Map<String, Long> clickerBalance;
+    /**
+     * key - id clicker
+     * value - last time collected clickers
+     */
+    private Map<String, Date> collectTimes;
 
     public User(String seed) {
         this.seed = seed;
@@ -45,5 +52,15 @@ public class User{
     @Override
     public int hashCode() {
         return Objects.hash(id.toString());
+    }
+
+    public Map<String, Long> getClickerBalance() {
+        if (clickerBalance == null) clickerBalance = new HashMap<>();
+        return clickerBalance;
+    }
+
+    public Map<String, Date> getCollectTimes() {
+        if (collectTimes == null) collectTimes = new HashMap<>();
+        return collectTimes;
     }
 }
